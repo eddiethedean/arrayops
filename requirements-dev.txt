@@ -1,0 +1,5 @@
+# Development dependencies for arrayops
+maturin>=1.10,<2.0
+pytest>=7.0.0
+pytest-cov>=4.0.0
+

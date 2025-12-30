@@ -1,0 +1,25 @@
+[build-system]
+requires = ["maturin>=1.10,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "arrayops"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "License :: OSI Approved :: MIT License",
+    "Development Status :: 3 - Alpha",
+]
+dynamic = ["version"]
+description = "Rust-backed acceleration for Python array.array"
+readme = "README.md"
+
+[tool.maturin]
+module-name = "arrayops._arrayops"
+compatibility = "linux"
+strip = true
+
+[tool.maturin.sdist]
+include = ["arrayops/**/*.py", "src/**/*", "Cargo.toml", "pyproject.toml", "README.md", "LICENSE"]

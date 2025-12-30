@@ -1,0 +1,21 @@
+[package]
+name = "arrayops"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "arrayops"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.20", features = [] }
+
+[features]
+default = []
+parallel = ["dep:rayon"]
+simd = []
+
+[dependencies.rayon]
+version = "1.8"
+optional = true
