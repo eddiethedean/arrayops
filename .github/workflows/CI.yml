@@ -35,11 +35,8 @@ jobs:
     - name: Install pytest
       run: pip install pytest
 
-    - name: Build package
-      run: maturin build --release
-
-    - name: Install package
-      run: pip install target/wheels/arrayops-*.whl
+    - name: Build and install package
+      run: maturin develop --release
 
     - name: Run Python tests
       run: pytest tests/
