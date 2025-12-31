@@ -104,11 +104,13 @@ fn get_itemsize(array: &PyAny) -> PyResult<usize> {
 const PARALLEL_THRESHOLD_SUM: usize = 10_000;
 #[cfg_attr(not(feature = "parallel"), allow(dead_code))]
 const PARALLEL_THRESHOLD_SCALE: usize = 5_000;
-#[cfg_attr(not(feature = "parallel"), allow(dead_code))]
+// Note: MAP, FILTER, and REDUCE thresholds reserved for future use
+// (parallel execution for these operations is limited by Python's GIL)
+#[allow(dead_code)]
 const PARALLEL_THRESHOLD_MAP: usize = 10_000;
-#[cfg_attr(not(feature = "parallel"), allow(dead_code))]
+#[allow(dead_code)]
 const PARALLEL_THRESHOLD_FILTER: usize = 10_000;
-#[cfg_attr(not(feature = "parallel"), allow(dead_code))]
+#[allow(dead_code)]
 const PARALLEL_THRESHOLD_REDUCE: usize = 10_000;
 
 /// Extract buffer data to Vec for parallel processing
@@ -140,7 +142,6 @@ const SIMD_THRESHOLD: usize = 32;
 // TODO: Implement full SIMD when std::simd API stabilizes or use portable-simd crate
 
 // Generic sum implementation
-#[cfg_attr(not(feature = "parallel"), allow(unused_variables))]
 fn sum_impl<T>(py: Python, buffer: &PyBuffer<T>, len: usize) -> PyResult<T>
 where
     T: Element + Copy + Default + std::ops::Add<Output = T> + pyo3::ToPyObject + Send + Sync,
@@ -153,6 +154,9 @@ where
         }
     }
 
+    #[cfg(not(feature = "parallel"))]
+    let _ = len; // Suppress unused parameter warning when parallel is disabled
+
     let slice = buffer
         .as_slice(py)
         .ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
@@ -164,7 +168,6 @@ where
 }
 
 // Generic scale implementation (in-place)
-#[cfg_attr(not(feature = "parallel"), allow(unused_variables))]
 fn scale_impl<T, F>(py: Python, buffer: &mut PyBuffer<T>, factor: F, len: usize) -> PyResult<()>
 where
     T: Element + Copy + std::ops::Mul<F, Output = T> + Send + Sync,
@@ -190,6 +193,9 @@ where
             return Ok(());
         }
     }
+
+    #[cfg(not(feature = "parallel"))]
+    let _ = len; // Suppress unused parameter warning when parallel is disabled
 
     for item in slice.iter() {
         item.set(item.get() * factor);
