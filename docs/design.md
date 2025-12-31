@@ -53,7 +53,7 @@ Create a lightweight Rust extension that:
 │   Python     │
 │              │
 │ array.array  │  ← unchanged
-│ fastarray.py │
+│ arrayops/_arrayops.py │
 └──────┬───────┘
        │ buffer protocol
        ▼
@@ -73,25 +73,25 @@ Create a lightweight Rust extension that:
 ### Module layout
 
 ```python
-import fastarray as fa
+import arrayops
 ```
 
 ### Core operations
 
 ```
-fa.map(arr, fn)                -> array
-fa.map_inplace(arr, fn)        -> None
+arrayops.map(arr, fn)                -> array
+arrayops.map_inplace(arr, fn)        -> None
 
-fa.filter(arr, predicate)      -> array
+arrayops.filter(arr, predicate)      -> array
 
-fa.reduce(arr, fn, initial)    -> scalar
+arrayops.reduce(arr, fn, initial)    -> scalar
 
-fa.sum(arr)                    -> scalar
-fa.mean(arr)                   -> float
-fa.min(arr), fa.max(arr)
+arrayops.sum(arr)                    -> scalar
+arrayops.mean(arr)                   -> float
+arrayops.min(arr), arrayops.max(arr)
 
-fa.scale(arr, factor)          -> None
-fa.clip(arr, min, max)         -> None
+arrayops.scale(arr, factor)          -> None
+arrayops.clip(arr, min, max)         -> None
 ```
 
 ### Type restrictions
@@ -150,8 +150,8 @@ Each kernel is monomorphized → fast loops.
 #### A. Fast path (no Python calls)
 
 ```python
-fa.scale(arr, 1.5)
-fa.sum(arr)
+arrayops.scale(arr, 1.5)
+arrayops.sum(arr)
 ```
 
 - Pure Rust loop
@@ -161,7 +161,7 @@ fa.sum(arr)
 #### B. Callback path (slower, flexible)
 
 ```python
-fa.map(arr, lambda x: x * x)
+arrayops.map(arr, lambda x: x * x)
 ```
 
 - GIL held
@@ -180,7 +180,7 @@ fa.map(arr, lambda x: x * x)
 
 ## 8. Performance Characteristics
 
-| Operation | Python list | array.array | fastarray |
+| Operation | Python list | array.array | arrayops |
 |-----------|-------------|-------------|-----------|
 | Iteration | Fast | Slower | ❌ (avoid) |
 | Sum | Slow | Slow | 🚀 |
@@ -266,7 +266,7 @@ maturin publish
 
 ## 15. Summary
 
-fastarray would:
+arrayops would:
 - Fill a real gap between `array.array` and NumPy
 - Leverage Rust for safety + speed
 - Enable high-performance numeric scripts with zero dependencies
