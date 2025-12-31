@@ -402,7 +402,7 @@ start = time.perf_counter()
 python_sum = sum(arr)
 python_time = time.perf_counter() - start
 
-# arrayops sum
+# ao sum
 start = time.perf_counter()
 ao_sum = ao.sum(arr)
 ao_time = time.perf_counter() - start
