@@ -37,7 +37,7 @@ def scale(arr: _ArrayLike, factor: float) -> None:
 
 def map(
     arr: _ArrayLike, fn: Callable[[Union[int, float]], Union[int, float]]
-) -> Union["array.array", "np.ndarray"]:
+) -> Union["array.array", "np.ndarray"]:  # noqa: F821
     """
     Apply function to each element, return new array.
 
@@ -66,7 +66,7 @@ def map_inplace(
 
 def filter(
     arr: _ArrayLike, predicate: Callable[[Union[int, float]], bool]
-) -> Union["array.array", "np.ndarray"]:
+) -> Union["array.array", "np.ndarray"]:  # noqa: F821
     """
     Return new array with filtered elements.
 
