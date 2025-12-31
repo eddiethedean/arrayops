@@ -36,31 +36,56 @@ jobs:
             python-version: '3.13'
             python-tag: 'cp313'
             build-platform: linux
-          # macOS builds (universal2 wheels work on both Intel and ARM)
+          # macOS ARM builds (Apple Silicon)
           - os: macos-14
             python-version: '3.8'
             python-tag: 'cp38'
-            build-platform: macos
+            build-platform: macos-arm64
           - os: macos-14
             python-version: '3.9'
             python-tag: 'cp39'
-            build-platform: macos
+            build-platform: macos-arm64
           - os: macos-14
             python-version: '3.10'
             python-tag: 'cp310'
-            build-platform: macos
+            build-platform: macos-arm64
           - os: macos-14
             python-version: '3.11'
             python-tag: 'cp311'
-            build-platform: macos
+            build-platform: macos-arm64
           - os: macos-14
             python-version: '3.12'
             python-tag: 'cp312'
-            build-platform: macos
+            build-platform: macos-arm64
           - os: macos-14
             python-version: '3.13'
             python-tag: 'cp313'
-            build-platform: macos
+            build-platform: macos-arm64
+          # macOS Intel builds (x86_64)
+          - os: macos-12
+            python-version: '3.8'
+            python-tag: 'cp38'
+            build-platform: macos-x86_64
+          - os: macos-12
+            python-version: '3.9'
+            python-tag: 'cp39'
+            build-platform: macos-x86_64
+          - os: macos-12
+            python-version: '3.10'
+            python-tag: 'cp310'
+            build-platform: macos-x86_64
+          - os: macos-12
+            python-version: '3.11'
+            python-tag: 'cp311'
+            build-platform: macos-x86_64
+          - os: macos-12
+            python-version: '3.12'
+            python-tag: 'cp312'
+            build-platform: macos-x86_64
+          - os: macos-12
+            python-version: '3.13'
+            python-tag: 'cp313'
+            build-platform: macos-x86_64
           # Windows AMD64 builds
           - os: windows-latest
             python-version: '3.8'
@@ -114,11 +139,11 @@ jobs:
             --interpreter /opt/python/${{ matrix.python-tag }}-${{ matrix.python-tag }}/bin/python \
             --compatibility manylinux_2_24
 
-      - name: Build macOS wheels (universal2)
-        if: matrix.build-platform == 'macos'
+      - name: Build macOS wheels
+        if: startsWith(matrix.build-platform, 'macos-')
         run: |
           pip install maturin
-          maturin build --release --out dist --interpreter python --universal2
+          maturin build --release --out dist --interpreter python
 
       - name: Build Windows wheels
         if: matrix.build-platform == 'windows'
