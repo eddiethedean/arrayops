@@ -10,7 +10,7 @@ except ImportError:
         class ndarray: ...
 
 # Supported input types: array.array, numpy.ndarray, or memoryview
-_ArrayLike = Union["array.array", "np.ndarray", memoryview]
+_ArrayLike = Union["array.array", "np.ndarray", memoryview]  # noqa: F821
 
 def sum(arr: _ArrayLike) -> Union[int, float]:
     """
