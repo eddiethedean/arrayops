@@ -5,176 +5,277 @@ on:
     tags:
       - 'v*.*.*'  # Triggers on version tags like v0.1.0, v1.0.0, etc.
 
+env:
+  MATURIN_PROFILE: release
+
 jobs:
   build-wheels:
+    name: Build wheels (${{ matrix.os }} / ${{ matrix.architecture }} / py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Linux builds (manylinux_2_24)
+          # Ubuntu x86-64
           - os: ubuntu-latest
-            python-version: '3.8'
-            python-tag: 'cp38'
-            build-platform: linux
+            python: "3.8"
+            architecture: x86-64
           - os: ubuntu-latest
-            python-version: '3.9'
-            python-tag: 'cp39'
-            build-platform: linux
+            python: "3.9"
+            architecture: x86-64
           - os: ubuntu-latest
-            python-version: '3.10'
-            python-tag: 'cp310'
-            build-platform: linux
+            python: "3.10"
+            architecture: x86-64
           - os: ubuntu-latest
-            python-version: '3.11'
-            python-tag: 'cp311'
-            build-platform: linux
+            python: "3.11"
+            architecture: x86-64
           - os: ubuntu-latest
-            python-version: '3.12'
-            python-tag: 'cp312'
-            build-platform: linux
+            python: "3.12"
+            architecture: x86-64
           - os: ubuntu-latest
-            python-version: '3.13'
-            python-tag: 'cp313'
-            build-platform: linux
-          # macOS ARM builds (Apple Silicon)
-          - os: macos-14
-            python-version: '3.8'
-            python-tag: 'cp38'
-            build-platform: macos-arm64
-          - os: macos-14
-            python-version: '3.9'
-            python-tag: 'cp39'
-            build-platform: macos-arm64
-          - os: macos-14
-            python-version: '3.10'
-            python-tag: 'cp310'
-            build-platform: macos-arm64
-          - os: macos-14
-            python-version: '3.11'
-            python-tag: 'cp311'
-            build-platform: macos-arm64
-          - os: macos-14
-            python-version: '3.12'
-            python-tag: 'cp312'
-            build-platform: macos-arm64
-          - os: macos-14
-            python-version: '3.13'
-            python-tag: 'cp313'
-            build-platform: macos-arm64
-          # macOS Intel builds (x86_64)
-          - os: macos-12
-            python-version: '3.8'
-            python-tag: 'cp38'
-            build-platform: macos-x86_64
-          - os: macos-12
-            python-version: '3.9'
-            python-tag: 'cp39'
-            build-platform: macos-x86_64
-          - os: macos-12
-            python-version: '3.10'
-            python-tag: 'cp310'
-            build-platform: macos-x86_64
-          - os: macos-12
-            python-version: '3.11'
-            python-tag: 'cp311'
-            build-platform: macos-x86_64
-          - os: macos-12
-            python-version: '3.12'
-            python-tag: 'cp312'
-            build-platform: macos-x86_64
-          - os: macos-12
-            python-version: '3.13'
-            python-tag: 'cp313'
-            build-platform: macos-x86_64
-          # Windows AMD64 builds
+            python: "3.13"
+            architecture: x86-64
+          - os: ubuntu-latest
+            python: "3.14"
+            architecture: x86-64
+          # macOS latest (typically arm64/Apple Silicon)
+          - os: macos-latest
+            python: "3.8"
+            architecture: aarch64
+          - os: macos-latest
+            python: "3.9"
+            architecture: aarch64
+          - os: macos-latest
+            python: "3.10"
+            architecture: aarch64
+          - os: macos-latest
+            python: "3.11"
+            architecture: aarch64
+          - os: macos-latest
+            python: "3.12"
+            architecture: aarch64
+          - os: macos-latest
+            python: "3.13"
+            architecture: aarch64
+          - os: macos-latest
+            python: "3.14"
+            architecture: aarch64
+          # Windows x86-64
           - os: windows-latest
-            python-version: '3.8'
-            python-tag: 'cp38'
-            build-platform: windows
+            python: "3.8"
+            architecture: x86-64
           - os: windows-latest
-            python-version: '3.9'
-            python-tag: 'cp39'
-            build-platform: windows
+            python: "3.9"
+            architecture: x86-64
           - os: windows-latest
-            python-version: '3.10'
-            python-tag: 'cp310'
-            build-platform: windows
+            python: "3.10"
+            architecture: x86-64
           - os: windows-latest
-            python-version: '3.11'
-            python-tag: 'cp311'
-            build-platform: windows
+            python: "3.11"
+            architecture: x86-64
           - os: windows-latest
-            python-version: '3.12'
-            python-tag: 'cp312'
-            build-platform: windows
+            python: "3.12"
+            architecture: x86-64
           - os: windows-latest
-            python-version: '3.13'
-            python-tag: 'cp313'
-            build-platform: windows
-
-    runs-on: ${{ matrix.os }}
+            python: "3.13"
+            architecture: x86-64
+          - os: windows-latest
+            python: "3.14"
+            architecture: x86-64
+          # macOS 15 Intel (x86-64)
+          - os: macos-15-intel
+            python: "3.8"
+            architecture: x86-64
+          - os: macos-15-intel
+            python: "3.9"
+            architecture: x86-64
+          - os: macos-15-intel
+            python: "3.10"
+            architecture: x86-64
+          - os: macos-15-intel
+            python: "3.11"
+            architecture: x86-64
+          - os: macos-15-intel
+            python: "3.12"
+            architecture: x86-64
+          - os: macos-15-intel
+            python: "3.13"
+            architecture: x86-64
+          - os: macos-15-intel
+            python: "3.14"
+            architecture: x86-64
+          # Windows 11 ARM (aarch64) - Python 3.9 and 3.10 not available for Windows ARM
+          - os: windows-11-arm
+            python: "3.11"
+            architecture: aarch64
+          - os: windows-11-arm
+            python: "3.12"
+            architecture: aarch64
+          - os: windows-11-arm
+            python: "3.13"
+            architecture: aarch64
+          - os: windows-11-arm
+            python: "3.14"
+            architecture: aarch64
     steps:
-      - name: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build wheel (Linux - manylinux)
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          PYO3_USE_ABI3_FORWARD_COMPATIBILITY: ${{ (matrix.python == '3.13' || matrix.python == '3.14') && '1' || '' }}
+        run: |
+          PYTHON_VER="${{ matrix.python }}"
+          PYTHON_TAG="cp${PYTHON_VER//./}"
+          docker run --rm \
+            -v "$PWD:/io" \
+            -e PYO3_USE_ABI3_FORWARD_COMPATIBILITY="${{ (matrix.python == '3.13' || matrix.python == '3.14') && '1' || '' }}" \
+            -e PYTHON_TAG="${PYTHON_TAG}" \
+            -w /io \
+            quay.io/pypa/manylinux_2_28_x86_64:latest \
+            /bin/bash -c "
+            curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --profile minimal
+            source \$HOME/.cargo/env
+            /opt/python/\${PYTHON_TAG}-\${PYTHON_TAG}/bin/pip install maturin
+            /opt/python/\${PYTHON_TAG}-\${PYTHON_TAG}/bin/python -m maturin build \
+              --out dist \
+              --strip \
+              --release \
+              --manylinux 2_28 \
+              --interpreter /opt/python/\${PYTHON_TAG}-\${PYTHON_TAG}/bin/python
+            "
+
+      - name: Set up Python ${{ matrix.python }} (macOS/Windows)
+        if: matrix.os != 'ubuntu-latest'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Set up Rust (macOS/Windows)
+        if: matrix.os != 'ubuntu-latest'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install build tooling (macOS/Windows)
+        if: matrix.os != 'ubuntu-latest'
+        run: |
+          python -m pip install --upgrade pip
+          pip install maturin
+
+      - name: Build wheel (macOS/Windows)
+        if: matrix.os != 'ubuntu-latest'
+        env:
+          PYO3_USE_ABI3_FORWARD_COMPATIBILITY: ${{ (matrix.python == '3.13' || matrix.python == '3.14') && '1' || '' }}
+        run: maturin build --out dist --strip --release
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.os }}-${{ matrix.architecture }}-py${{ matrix.python }}
+          path: dist/*.whl
+          if-no-files-found: error
+          retention-days: 7
+
+  build-sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.12"
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Build Linux wheels (manylinux)
-        if: matrix.build-platform == 'linux'
-        env:
-          PYO3_USE_ABI3_FORWARD_COMPATIBILITY: ${{ matrix.python-version == '3.13' && '1' || '' }}
+      - name: Install build tooling
         run: |
-          docker run --rm -v "$PWD":/io \
-            -w /io \
-            -e PYO3_PYTHON=/opt/python/${{ matrix.python-tag }}-${{ matrix.python-tag }}/bin/python \
-            -e PYO3_USE_ABI3_FORWARD_COMPATIBILITY=${{ env.PYO3_USE_ABI3_FORWARD_COMPATIBILITY }} \
-            ghcr.io/pyo3/maturin:latest build \
-            --release --out /io/dist \
-            --interpreter /opt/python/${{ matrix.python-tag }}-${{ matrix.python-tag }}/bin/python \
-            --compatibility manylinux_2_24
-
-      - name: Build macOS wheels
-        if: startsWith(matrix.build-platform, 'macos-')
-        env:
-          PYO3_USE_ABI3_FORWARD_COMPATIBILITY: ${{ matrix.python-version == '3.13' && '1' || '' }}
-        run: |
+          python -m pip install --upgrade pip
           pip install maturin
-          maturin build --release --out dist --interpreter python
 
-      - name: Build Windows wheels
-        if: matrix.build-platform == 'windows'
-        env:
-          PYO3_USE_ABI3_FORWARD_COMPATIBILITY: ${{ matrix.python-version == '3.13' && '1' || '' }}
-        run: |
-          pip install maturin
-          maturin build --release --out dist --interpreter python
+      - name: Build sdist
+        run: maturin sdist --out dist
 
-      - name: Upload wheels
+      - name: Upload sdist artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.build-platform }}-${{ matrix.python-tag }}
-          path: dist/*.whl
+          name: sdist
+          path: dist/*.tar.gz
           if-no-files-found: error
+          retention-days: 7
 
   publish:
-    needs: build-wheels
+    name: Publish to PyPI
+    needs: [build-wheels, build-sdist]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - name: Download all wheels
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: wheels-*
+          pattern: wheel-*
           merge-multiple: true
-          path: dist
+          path: artifacts/wheels
+
+      - name: Download sdist
+        uses: actions/download-artifact@v4
+        with:
+          pattern: sdist
+          merge-multiple: true
+          path: artifacts/sdist
+
+      - name: Combine artifacts
+        shell: bash
+        run: |
+          set -e
+          
+          # Debug: Show what we downloaded
+          echo "=== Artifacts structure ==="
+          find artifacts -type f -o -type d 2>/dev/null | sort || true
+          echo ""
+          
+          # Create clean dist directory
+          mkdir -p dist
+          
+          # Copy wheels from artifacts directory (handle all possible structures)
+          echo "=== Copying wheels ==="
+          find artifacts -name "*.whl" -type f -exec cp -v {} dist/ \; || true
+          
+          # Copy sdist from artifacts directory (handle all possible structures)
+          echo "=== Copying sdist ==="
+          find artifacts -name "*.tar.gz" -type f -exec cp -v {} dist/ \; || true
+          
+          # Verify we have files
+          echo ""
+          echo "=== Final dist contents ==="
+          ls -lah dist/ || echo "dist/ is empty or doesn't exist"
+          echo ""
+          echo "=== Distribution files ==="
+          find dist -type f \( -name "*.whl" -o -name "*.tar.gz" \) 2>/dev/null | sort || echo "No files found"
+          echo ""
+          
+          # Count files
+          WHEEL_COUNT=$(find dist -name "*.whl" -type f 2>/dev/null | wc -l || echo "0")
+          SDIST_COUNT=$(find dist -name "*.tar.gz" -type f 2>/dev/null | wc -l || echo "0")
+          echo "Wheels: $WHEEL_COUNT"
+          echo "Source distributions: $SDIST_COUNT"
+          
+          if [ "$WHEEL_COUNT" -eq 0 ] && [ "$SDIST_COUNT" -eq 0 ]; then
+            echo "ERROR: No distribution files found in dist/!"
+            echo "Checking artifacts directory:"
+            find artifacts -type f 2>/dev/null || true
+            exit 1
+          fi
+          
+          echo "✅ Successfully prepared $((WHEEL_COUNT + SDIST_COUNT)) distribution files"
 
       - name: Publish to PyPI
         env:
@@ -182,4 +283,4 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           pip install twine
-          twine upload dist/*.whl
+          twine upload dist/*
