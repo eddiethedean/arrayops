@@ -229,7 +229,7 @@ class TestModuleInitialization:
         assert "map_inplace" in arrayops.__all__
         assert "filter" in arrayops.__all__
         assert "reduce" in arrayops.__all__
-        assert arrayops.__version__ == "0.1.4"
+        assert arrayops.__version__ == "0.2.0"
 
     def test_module_import_error_with_arrayops_in_message(self):
         """Test helpful error message when _arrayops module is missing."""
