@@ -90,7 +90,7 @@ print(product)  # 120
 
 ## 📚 Supported Types
 
-`arrayops` supports all numeric `array.array` typecodes, `numpy.ndarray` (1D, contiguous), and Python `memoryview` objects:
+`ao` supports all numeric `array.array` typecodes, `numpy.ndarray` (1D, contiguous), and Python `memoryview` objects:
 
 | Type | Code | Description |
 |------|------|-------------|
@@ -376,9 +376,9 @@ ao.scale(empty, 5.0)    # No error, array remains empty
 
 ## ⚡ Performance
 
-`arrayops` provides significant speedups over pure Python operations:
+`ao` provides significant speedups over pure Python operations:
 
-| Operation | Python | arrayops | Speedup |
+| Operation | Python | ao | Speedup |
 |-----------|--------|----------|---------|
 | Sum (1M ints) | ~50ms | ~0.5ms | 100x |
 | Scale (1M ints) | ~80ms | ~1.5ms | 50x |
@@ -402,19 +402,19 @@ start = time.perf_counter()
 python_sum = sum(arr)
 python_time = time.perf_counter() - start
 
-# arrayops sum
+# ao sum
 start = time.perf_counter()
 arrayops_sum = ao.sum(arr)
 arrayops_time = time.perf_counter() - start
 
 print(f"Python sum: {python_time*1000:.2f}ms")
-print(f"arrayops sum: {arrayops_time*1000:.2f}ms")
-print(f"Speedup: {python_time / arrayops_time:.1f}x")
+print(f"ao sum: {ao_time*1000:.2f}ms")
+print(f"Speedup: {python_time / ao_time:.1f}x")
 ```
 
 ### Performance Features
 
-`arrayops` supports optional performance optimizations via feature flags:
+`ao` supports optional performance optimizations via feature flags:
 
 #### Parallel Execution (`--features parallel`)
 
@@ -444,7 +444,7 @@ SIMD (Single Instruction, Multiple Data) optimizations are in development:
 
 ## 🔄 Comparison
 
-| Feature | `array.array` | `arrayops` | NumPy |
+| Feature | `array.array` | `ao` | NumPy |
 |---------|---------------|------------|-------|
 | Memory efficient | ✅ | ✅ | ❌ |
 | Fast operations | ❌ | ✅ | ✅ |
@@ -581,7 +581,7 @@ See the [Performance Features](#performance-features) section above for details.
 
 ## 📝 Error Handling
 
-`arrayops` provides clear error messages:
+`ao` provides clear error messages:
 
 ```python
 import arrayops as ao
