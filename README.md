@@ -90,7 +90,7 @@ print(product)  # 120
 
 ## 📚 Supported Types
 
-`ao` supports all numeric `array.array` typecodes, `numpy.ndarray` (1D, contiguous), and Python `memoryview` objects:
+`arrayops` supports all numeric `array.array` typecodes, `numpy.ndarray` (1D, contiguous), and Python `memoryview` objects:
 
 | Type | Code | Description |
 |------|------|-------------|
@@ -376,7 +376,7 @@ ao.scale(empty, 5.0)    # No error, array remains empty
 
 ## ⚡ Performance
 
-`ao` provides significant speedups over pure Python operations:
+`arrayops` provides significant speedups over pure Python operations:
 
 | Operation | Python | ao | Speedup |
 |-----------|--------|----------|---------|
@@ -414,7 +414,7 @@ print(f"Speedup: {python_time / ao_time:.1f}x")
 
 ### Performance Features
 
-`ao` supports optional performance optimizations via feature flags:
+`arrayops` supports optional performance optimizations via feature flags:
 
 #### Parallel Execution (`--features parallel`)
 
@@ -581,7 +581,7 @@ See the [Performance Features](#performance-features) section above for details.
 
 ## 📝 Error Handling
 
-`ao` provides clear error messages:
+`arrayops` provides clear error messages:
 
 ```python
 import arrayops as ao
