@@ -4,7 +4,7 @@ This package provides fast, Rust-accelerated operations for Python's built-in
 array.array type, supporting numeric operations like sum and scale.
 """
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 try:
     from arrayops._arrayops import sum, scale
