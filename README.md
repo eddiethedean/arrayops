@@ -376,9 +376,9 @@ ao.scale(empty, 5.0)    # No error, array remains empty
 
 ## ⚡ Performance
 
-`arrayops` provides significant speedups over pure Python operations:
+`ao` provides significant speedups over pure Python operations:
 
-| Operation | Python | arrayops | Speedup |
+| Operation | Python | ao | Speedup |
 |-----------|--------|----------|---------|
 | Sum (1M ints) | ~50ms | ~0.5ms | 100x |
 | Scale (1M ints) | ~80ms | ~1.5ms | 50x |
