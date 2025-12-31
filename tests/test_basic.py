@@ -280,9 +280,11 @@ class TestModuleInitialization:
             # Read and execute the __init__.py file directly to trigger error path
             import os
 
-            init_path = os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "arrayops", "__init__.py"
-            )
+            # Try arrayops first, then arrayops_src (for CI where directory is renamed)
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            init_path = os.path.join(base_dir, "arrayops", "__init__.py")
+            if not os.path.exists(init_path):
+                init_path = os.path.join(base_dir, "arrayops_src", "__init__.py")
 
             # Load and execute the module source with a mocked import
             # We need to actually execute it with the import failing
@@ -346,9 +348,11 @@ class TestModuleInitialization:
             import os
             import builtins
 
-            init_path = os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "arrayops", "__init__.py"
-            )
+            # Try arrayops first, then arrayops_src (for CI where directory is renamed)
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            init_path = os.path.join(base_dir, "arrayops", "__init__.py")
+            if not os.path.exists(init_path):
+                init_path = os.path.join(base_dir, "arrayops_src", "__init__.py")
 
             # Read the source
             with open(init_path, "r") as f:
