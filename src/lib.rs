@@ -80,6 +80,12 @@ fn validate_array_array(array: &PyAny) -> PyResult<()> {
     Ok(())
 }
 
+/// Get the length of an array.array
+fn get_array_len(array: &PyAny) -> PyResult<usize> {
+    let len = array.len()?;
+    Ok(len)
+}
+
 // Generic sum implementation
 fn sum_impl<T>(py: Python, buffer: &PyBuffer<T>) -> PyResult<T>
 where
@@ -118,6 +124,22 @@ where
 fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
     validate_array_array(array)?;
     let typecode = get_typecode(array)?;
+    
+    // Handle empty arrays early to avoid buffer alignment issues on macOS
+    if get_array_len(array)? == 0 {
+        match typecode {
+            TypeCode::Int8 => return Ok(0i8.to_object(py)),
+            TypeCode::Int16 => return Ok(0i16.to_object(py)),
+            TypeCode::Int32 => return Ok(0i32.to_object(py)),
+            TypeCode::Int64 => return Ok(0i64.to_object(py)),
+            TypeCode::UInt8 => return Ok(0u8.to_object(py)),
+            TypeCode::UInt16 => return Ok(0u16.to_object(py)),
+            TypeCode::UInt32 => return Ok(0u32.to_object(py)),
+            TypeCode::UInt64 => return Ok(0u64.to_object(py)),
+            TypeCode::Float32 => return Ok(0.0f32.to_object(py)),
+            TypeCode::Float64 => return Ok(0.0f64.to_object(py)),
+        }
+    }
     
     match typecode {
         TypeCode::Int8 => {
@@ -178,6 +200,11 @@ fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
 fn scale(py: Python, array: &PyAny, factor: f64) -> PyResult<()> {
     validate_array_array(array)?;
     let typecode = get_typecode(array)?;
+    
+    // Handle empty arrays early to avoid buffer alignment issues on macOS
+    if get_array_len(array)? == 0 {
+        return Ok(());
+    }
     
     match typecode {
         TypeCode::Int8 => {
@@ -251,6 +278,14 @@ fn map(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<PyObject> {
     validate_array_array(array)?;
     let typecode = get_typecode(array)?;
     let callable = r#fn.as_ref(py);
+    
+    // Handle empty arrays early to avoid buffer alignment issues on macOS
+    if get_array_len(array)? == 0 {
+        let array_module = PyModule::import(py, "array")?;
+        let array_type = array_module.getattr("array")?;
+        let typecode_char = typecode.as_char();
+        return Ok(array_type.call1((typecode_char, PyList::empty(py)))?.to_object(py));
+    }
     
     match typecode {
         TypeCode::Int8 => {
@@ -397,6 +432,14 @@ fn filter(py: Python, array: &PyAny, predicate: PyObject) -> PyResult<PyObject> 
     let typecode = get_typecode(array)?;
     let callable = predicate.as_ref(py);
     
+    // Handle empty arrays early to avoid buffer alignment issues on macOS
+    if get_array_len(array)? == 0 {
+        let array_module = PyModule::import(py, "array")?;
+        let array_type = array_module.getattr("array")?;
+        let typecode_char = typecode.as_char();
+        return Ok(array_type.call1((typecode_char, PyList::empty(py)))?.to_object(py));
+    }
+    
     match typecode {
         TypeCode::Int8 => {
             let buffer = PyBuffer::<i8>::get(array)?;
@@ -448,6 +491,8 @@ where
 {
     let slice = buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
     
+    // Note: Empty check is now done in reduce() before getting the buffer,
+    // but keep this as a safety check in case the buffer is somehow empty
     if slice.is_empty() {
         return match initial {
             Some(init) => Ok(init),
@@ -478,6 +523,15 @@ fn reduce(py: Python, array: &PyAny, r#fn: PyObject, initial: Option<PyObject>) 
     validate_array_array(array)?;
     let typecode = get_typecode(array)?;
     let callable = r#fn.as_ref(py);
+    
+    // Handle empty arrays early to avoid buffer alignment issues on macOS
+    let array_len = get_array_len(array)?;
+    if array_len == 0 {
+        return match initial {
+            Some(init) => Ok(init),
+            None => Err(PyValueError::new_err("reduce() of empty array with no initial value")),
+        };
+    }
     
     match typecode {
         TypeCode::Int8 => {
