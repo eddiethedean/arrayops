@@ -152,7 +152,10 @@ where
     {
         if should_parallelize(len, PARALLEL_THRESHOLD_SUM) {
             let data = extract_buffer_to_vec(py, buffer)?;
-            return Ok(data.par_iter().copied().reduce(|| T::default(), |a, b| a + b));
+            return Ok(data
+                .par_iter()
+                .copied()
+                .reduce(|| T::default(), |a, b| a + b));
         }
     }
 
