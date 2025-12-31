@@ -113,7 +113,7 @@ import array
 import arrayops as ao
 import time
 
-def benchmark_sum(size=100_000):
+def benchmark_sum(size=10_000):
     # Create test array (use smaller size for int32 to avoid overflow)
     arr = array.array('i', list(range(size)))
     
@@ -139,7 +139,7 @@ def benchmark_sum(size=100_000):
     return speedup
 
 # Run benchmarks
-for size in [1_000, 10_000, 50_000, 100_000]:
+for size in [1_000, 10_000, 50_000]:
     benchmark_sum(size)
     print()
 ```
@@ -292,6 +292,7 @@ total = ao.sum(array.array('i', list(arr)))  # Unnecessary copy
 
 ```python
 # Good: In-place scaling
+arr = array.array('i', [1, 2, 3, 4, 5])
 ao.scale(arr, 2.0)  # Modifies arr directly
 
 # Avoid: Creating new arrays when possible
