@@ -29,7 +29,13 @@ jobs:
           pip install maturin
 
       - name: Build package with maturin (manylinux)
-        run: maturin build --release --out dist --manylinux manylinux2014
+        run: |
+          docker run --rm -v "$PWD":/io \
+            -e PYO3_PYTHON=/opt/python/cp312-cp312/bin/python \
+            ghcr.io/pyo3/maturin:latest build \
+            --release --out /io/dist \
+            --interpreter /opt/python/cp312-cp312/bin/python \
+            --compatibility manylinux2014
 
       - name: Publish to PyPI
         env:
