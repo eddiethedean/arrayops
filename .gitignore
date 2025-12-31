@@ -43,8 +43,12 @@ Thumbs.db
 # Maturin
 *.whl
 _build/
+
+# Documentation build artifacts (Sphinx)
+docs/.doctrees/
 docs/_build/
-docs/_static/*
+docs/_build/**
 !docs/_static/.gitkeep
-docs/_templates/*
+docs/_static/*
 !docs/_templates/.gitkeep
+docs/_templates/*
