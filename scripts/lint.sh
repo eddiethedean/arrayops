@@ -8,6 +8,14 @@
 
 set -e
 
+# Source cargo environment if available
+if [ -f "$HOME/.cargo/env" ]; then
+    source "$HOME/.cargo/env"
+fi
+
+# Add cargo bin to PATH if not already there
+export PATH="$HOME/.cargo/bin:$PATH"
+
 # Check if cargo is available
 if ! command -v cargo &> /dev/null; then
     echo "Error: cargo not found. Please install Rust first:"
