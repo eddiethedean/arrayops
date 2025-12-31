@@ -12,11 +12,9 @@ try:
     __all__ = ["sum", "scale"]
 except ImportError as e:
     # Module not yet built - provide helpful error message
-    import sys
     if "_arrayops" in str(e):
         raise ImportError(
             "arrayops extension module not found. "
             "Build the package with 'maturin develop' or 'pip install -e .'"
         ) from e
     raise
-

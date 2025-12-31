@@ -5,6 +5,9 @@ build-backend = "maturin"
 [project]
 name = "arrayops"
 requires-python = ">=3.8"
+authors = [
+    {name = "Odos Matthews", email = "odosmatthews@gmail.com"}
+]
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
@@ -15,6 +18,10 @@ classifiers = [
 dynamic = ["version"]
 description = "Rust-backed acceleration for Python array.array"
 readme = "README.md"
+[project.urls]
+Homepage = "https://github.com/eddiethedean/arrayops"
+Repository = "https://github.com/eddiethedean/arrayops"
+Documentation = "https://github.com/eddiethedean/arrayops#readme"
 
 [tool.maturin]
 module-name = "arrayops._arrayops"
