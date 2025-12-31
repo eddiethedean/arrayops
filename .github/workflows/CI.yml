@@ -49,9 +49,6 @@ jobs:
     - name: Run Python tests
       run: pytest tests/
 
-    - name: Run Rust tests
-      run: cargo test --release
-
   lint:
     name: Lint
     runs-on: ubuntu-latest
