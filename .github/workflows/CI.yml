@@ -48,7 +48,7 @@ jobs:
       run: pip install target/wheels/arrayops-*.whl --force-reinstall
 
     - name: Run Python tests
-      run: python -m pytest tests/
+      run: python -m pytest tests/ --import-mode=importlib
 
   test-features:
     name: Test with features ${{ matrix.features }}
@@ -85,7 +85,7 @@ jobs:
       run: pip install target/wheels/arrayops-*.whl --force-reinstall
 
     - name: Run Python tests
-      run: python -m pytest tests/
+      run: python -m pytest tests/ --import-mode=importlib
 
   lint:
     name: Lint
