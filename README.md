@@ -19,7 +19,7 @@ Fast, lightweight numeric operations for Python's `array.array` without the over
 - ⚡ **High Performance**: 10-100x faster than pure Python loops using Rust-accelerated operations
 - 🔒 **Memory Safe**: Zero-copy buffer access with Rust's safety guarantees
 - 📦 **Lightweight**: No dependencies beyond Rust standard library (optional: parallel execution via `rayon`)
-- 🔌 **Compatible**: Works directly with Python's `array.array` - no new types
+- 🔌 **Compatible**: Works directly with Python's `array.array`, `numpy.ndarray` (1D), and `memoryview` - no new types
 - ✅ **Fully Tested**: 100% code coverage (Python and Rust)
 - 🎯 **Type Safe**: Full mypy type checking support
 - 🚀 **Optional Optimizations**: Parallel execution and SIMD support via feature flags
@@ -90,7 +90,7 @@ print(product)  # 120
 
 ## 📚 Supported Types
 
-`arrayops` supports all numeric `array.array` typecodes:
+`arrayops` supports all numeric `array.array` typecodes, `numpy.ndarray` (1D, contiguous), and Python `memoryview` objects:
 
 | Type | Code | Description |
 |------|------|-------------|
@@ -133,7 +133,9 @@ result = arrayops.sum(farr)  # Returns: 7.5 (float)
 Scale all elements of an array in-place by a factor.
 
 **Parameters:**
-- `arr` (`array.array`): Input array with numeric type (modified in-place)
+- `arr` (`array.array`, `numpy.ndarray`, or `memoryview`): Input array with numeric type (modified in-place)
+  - For `numpy.ndarray`: must be 1D and contiguous
+  - For `memoryview`: must be writable (read-only memoryviews raise ValueError)
 - `factor` (`float`): Scaling factor
 
 **Returns:**
@@ -157,16 +159,18 @@ arrayops.scale(farr, 1.5)
 print(list(farr))  # [1.5, 3.0, 4.5]
 ```
 
-### `map(arr, fn) -> array.array`
+### `map(arr, fn) -> array.array | numpy.ndarray`
 
 Apply a function to each element, returning a new array.
 
 **Parameters:**
-- `arr` (`array.array`): Input array with numeric type
+- `arr` (`array.array`, `numpy.ndarray`, or `memoryview`): Input array with numeric type
 - `fn` (callable): Function that takes one element and returns a value of the same type
 
 **Returns:**
-- `array.array`: New array with the same type as input
+- `array.array` or `numpy.ndarray`: New array with the same type as input
+  - Returns `numpy.ndarray` if input is `numpy.ndarray`
+  - Returns `array.array` if input is `array.array` or `memoryview`
 
 **Raises:**
 - `TypeError`: If input is not an `array.array` or `fn` is not callable
@@ -194,7 +198,8 @@ print(list(squared))  # [1, 4, 9, 16, 25]
 Apply a function to each element in-place.
 
 **Parameters:**
-- `arr` (`array.array`): Input array with numeric type (modified in-place)
+- `arr` (`array.array`, `numpy.ndarray`, or `memoryview`): Input array with numeric type (modified in-place)
+  - For `memoryview`: must be writable
 - `fn` (callable): Function that takes one element and returns a value of the same type
 
 **Returns:**
@@ -214,16 +219,18 @@ arrayops.map_inplace(arr, lambda x: x * 2)
 print(list(arr))  # [2, 4, 6, 8, 10]
 ```
 
-### `filter(arr, predicate) -> array.array`
+### `filter(arr, predicate) -> array.array | numpy.ndarray`
 
 Filter elements using a predicate function, returning a new array.
 
 **Parameters:**
-- `arr` (`array.array`): Input array with numeric type
+- `arr` (`array.array`, `numpy.ndarray`, or `memoryview`): Input array with numeric type
 - `predicate` (callable): Function that takes one element and returns `bool`
 
 **Returns:**
-- `array.array`: New array with filtered elements (same type as input)
+- `array.array` or `numpy.ndarray`: New array with filtered elements
+  - Returns `numpy.ndarray` if input is `numpy.ndarray`
+  - Returns `array.array` if input is `array.array` or `memoryview`
 
 **Raises:**
 - `TypeError`: If input is not an `array.array` or `predicate` is not callable
@@ -248,7 +255,7 @@ print(list(large))  # [4, 5, 6]
 Reduce array to a single value using a binary function.
 
 **Parameters:**
-- `arr` (`array.array`): Input array with numeric type
+- `arr` (`array.array`, `numpy.ndarray`, or `memoryview`): Input array with numeric type
 - `fn` (callable): Binary function that takes (accumulator, element) and returns a value
 - `initial` (optional): Initial value for the accumulator. If not provided, uses first element.
 
@@ -442,9 +449,11 @@ SIMD (Single Instruction, Multiple Data) optimizations are in development:
 | Memory efficient | ✅ | ✅ | ❌ |
 | Fast operations | ❌ | ✅ | ✅ |
 | Multi-dimensional | ❌ | ❌ | ✅ |
-| Zero dependencies | ✅ | ✅ | ❌ |
+| Zero dependencies | ✅ | ✅ (NumPy optional) | ❌ |
 | C-compatible | ✅ | ✅ | ✅ |
 | Type safety | ✅ | ✅ | ⚠️ |
+| NumPy interop | ❌ | ✅ (1D only) | ✅ |
+| Memoryview support | ❌ | ✅ | ❌ |
 | Use case | Binary I/O | Scripting/ETL | Scientific computing |
 
 ## 🏗️ Architecture
@@ -624,7 +633,7 @@ MIT License - see LICENSE file for details.
 ## 📞 Support
 
 - **Issues**: Report bugs or request features on GitHub
-- **Documentation**: See [docs/design.md](docs/design.md) for detailed architecture
+- **Documentation**: See [docs/](docs/) directory or [Read the Docs](https://arrayops.readthedocs.io/) (when published)
 - **Questions**: Open a discussion on GitHub
 
 ---

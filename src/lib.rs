@@ -75,14 +75,196 @@ fn get_typecode(array: &PyAny) -> PyResult<TypeCode> {
     TypeCode::from_char(typecode_str.chars().next().unwrap())
 }
 
+/// Get typecode from numpy.ndarray dtype
+fn get_numpy_typecode(arr: &PyAny) -> PyResult<TypeCode> {
+    let dtype = arr.getattr("dtype")?;
+    let dtype_str = dtype.getattr("char")?.str()?.to_string_lossy();
+    let dtype_char = dtype_str.chars().next().ok_or_else(|| {
+        PyTypeError::new_err("Could not extract dtype character from numpy.ndarray")
+    })?;
+
+    // Map numpy dtype characters to TypeCode
+    // numpy uses: 'b'=int8, 'h'=int16, 'i'=int32, 'l'=int64
+    //             'B'=uint8, 'H'=uint16, 'I'=uint32, 'L'=uint64
+    //             'f'=float32, 'd'=float64
+    match dtype_char {
+        'b' => Ok(TypeCode::Int8),
+        'h' => Ok(TypeCode::Int16),
+        'i' => Ok(TypeCode::Int32),
+        'l' => Ok(TypeCode::Int64),
+        'B' => Ok(TypeCode::UInt8),
+        'H' => Ok(TypeCode::UInt16),
+        'I' => Ok(TypeCode::UInt32),
+        'L' => Ok(TypeCode::UInt64),
+        'f' => Ok(TypeCode::Float32),
+        'd' => Ok(TypeCode::Float64),
+        _ => Err(PyTypeError::new_err(format!(
+            "Unsupported numpy dtype: '{}'. Supported: b, B, h, H, i, I, l, L, f, d",
+            dtype_char
+        ))),
+    }
+}
+
+/// Get typecode from memoryview format string
+fn get_memoryview_typecode(mv: &PyAny) -> PyResult<TypeCode> {
+    let format_str = mv.getattr("format")?.str()?.to_string_lossy();
+    
+    // Parse format string (handle endianness: '<i4', '>f8', 'i', 'I', etc.)
+    // Remove endianness prefix if present (<, >, =, !)
+    let cleaned_format = format_str.trim_start_matches(['<', '>', '=', '!']);
+    
+    // Extract the base type character (first character after endianness)
+    let base_char = cleaned_format.chars().next().ok_or_else(|| {
+        PyTypeError::new_err("Could not parse memoryview format string")
+    })?;
+
+    // Map memoryview format to TypeCode
+    // Standard formats: 'b'=signed char, 'B'=unsigned char, 'h'=short, 'H'=unsigned short
+    //                   'i'=int, 'I'=unsigned int, 'l'=long, 'L'=unsigned long
+    //                   'f'=float, 'd'=double
+    match base_char {
+        'b' => Ok(TypeCode::Int8),
+        'B' => Ok(TypeCode::UInt8),
+        'h' => Ok(TypeCode::Int16),
+        'H' => Ok(TypeCode::UInt16),
+        'i' => Ok(TypeCode::Int32),
+        'I' => Ok(TypeCode::UInt32),
+        'l' => Ok(TypeCode::Int64),
+        'L' => Ok(TypeCode::UInt64),
+        'f' => Ok(TypeCode::Float32),
+        'd' => Ok(TypeCode::Float64),
+        _ => Err(PyTypeError::new_err(format!(
+            "Unsupported memoryview format: '{}'. Supported: b, B, h, H, i, I, l, L, f, d",
+            base_char
+        ))),
+    }
+}
+
+/// Get typecode from unified input (array.array, numpy.ndarray, or memoryview)
+fn get_typecode_unified(obj: &PyAny, input_type: InputType) -> PyResult<TypeCode> {
+    match input_type {
+        InputType::ArrayArray => get_typecode(obj),
+        InputType::NumPyArray => get_numpy_typecode(obj),
+        InputType::MemoryView => get_memoryview_typecode(obj),
+    }
+}
+
+/// Input type enumeration
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum InputType {
+    ArrayArray,
+    NumPyArray,
+    MemoryView,
+}
+
+/// Detect the input type (array.array, numpy.ndarray, or memoryview)
+fn detect_input_type(obj: &PyAny) -> PyResult<InputType> {
+    // Check array.array first (maintain backward compatibility)
+    let module = PyModule::import(obj.py(), "array")?;
+    if let Ok(array_type) = module.getattr("array") {
+        if obj.is_instance(array_type)? {
+            return Ok(InputType::ArrayArray);
+        }
+    }
+
+    // Check numpy.ndarray (graceful handling if NumPy not available)
+    if let Ok(numpy_module) = PyModule::import(obj.py(), "numpy") {
+        if let Ok(ndarray_type) = numpy_module.getattr("ndarray") {
+            if obj.is_instance(ndarray_type)? {
+                return Ok(InputType::NumPyArray);
+            }
+        }
+    }
+
+    // Check memoryview (built-in type)
+    // Use Python's builtins to get memoryview type
+    let builtins = PyModule::import(obj.py(), "builtins")?;
+    if let Ok(memoryview_type) = builtins.getattr("memoryview") {
+        if obj.is_instance(memoryview_type)? {
+            return Ok(InputType::MemoryView);
+        }
+    }
+
+    Err(PyTypeError::new_err(
+        "Expected array.array, numpy.ndarray, or memoryview",
+    ))
+}
+
 /// Validate that the input is an array.array
 fn validate_array_array(array: &PyAny) -> PyResult<()> {
     let module = PyModule::import(array.py(), "array")?;
     let array_type = module.getattr("array")?;
     if !array.is_instance(array_type)? {
         return Err(PyTypeError::new_err(
-            "Expected array.array, got different type",
+            "Expected array.array, numpy.ndarray, or memoryview",
         ));
+    }
+    Ok(())
+}
+
+/// Validate numpy.ndarray (1D, contiguous)
+fn validate_numpy_array(arr: &PyAny) -> PyResult<()> {
+    // Check if it's a numpy array (should already be detected, but double-check)
+    let numpy_module = PyModule::import(arr.py(), "numpy")?;
+    let ndarray_type = numpy_module.getattr("ndarray")?;
+    if !arr.is_instance(ndarray_type)? {
+        return Err(PyTypeError::new_err("Expected numpy.ndarray"));
+    }
+
+    // Check dimensions (must be 1D)
+    let ndim: i32 = arr.getattr("ndim")?.extract()?;
+    if ndim != 1 {
+        return Err(PyTypeError::new_err(
+            "numpy.ndarray must be 1-dimensional (ndim == 1)",
+        ));
+    }
+
+    // Check contiguity (must be C_CONTIGUOUS or F_CONTIGUOUS)
+    // NumPy flags object - use lowercase attribute names (c_contiguous, f_contiguous)
+    let flags = arr.getattr("flags")?;
+    let c_contiguous: bool = flags.getattr("c_contiguous")?.extract()?;
+    let f_contiguous: bool = flags.getattr("f_contiguous")?.extract()?;
+    if !c_contiguous && !f_contiguous {
+        return Err(PyTypeError::new_err(
+            "numpy.ndarray must be contiguous (C_CONTIGUOUS or F_CONTIGUOUS)",
+        ));
+    }
+
+    Ok(())
+}
+
+/// Validate memoryview
+fn validate_memoryview(mv: &PyAny) -> PyResult<()> {
+    // Check if it's a memoryview (should already be detected, but double-check)
+    let builtins = PyModule::import(mv.py(), "builtins")?;
+    let memoryview_type = builtins.getattr("memoryview")?;
+    if !mv.is_instance(memoryview_type)? {
+        return Err(PyTypeError::new_err("Expected memoryview"));
+    }
+    Ok(())
+}
+
+/// Check if memoryview is writable
+fn is_memoryview_writable(mv: &PyAny) -> PyResult<bool> {
+    let readonly: bool = mv.getattr("readonly")?.extract()?;
+    Ok(!readonly)
+}
+
+/// Validate input for operation
+fn validate_for_operation(obj: &PyAny, input_type: InputType, in_place: bool) -> PyResult<()> {
+    match input_type {
+        InputType::ArrayArray => validate_array_array(obj)?,
+        InputType::NumPyArray => validate_numpy_array(obj)?,
+        InputType::MemoryView => {
+            validate_memoryview(obj)?;
+            if in_place {
+                if !is_memoryview_writable(obj)? {
+                    return Err(PyValueError::new_err(
+                        "memoryview is read-only; in-place operations require writable memoryview",
+                    ));
+                }
+            }
+        }
     }
     Ok(())
 }
@@ -93,10 +275,89 @@ fn get_array_len(array: &PyAny) -> PyResult<usize> {
     Ok(len)
 }
 
-/// Get itemsize of an array.array
+/// Get itemsize of an array.array, numpy.ndarray, or memoryview
 fn get_itemsize(array: &PyAny) -> PyResult<usize> {
     let itemsize: usize = array.getattr("itemsize")?.extract()?;
     Ok(itemsize)
+}
+
+/// Create an empty result array based on input type
+fn create_empty_result_array(
+    py: Python,
+    typecode: TypeCode,
+    input_type: InputType,
+) -> PyResult<PyObject> {
+    match input_type {
+        InputType::NumPyArray => {
+            // Create numpy array with same dtype
+            let numpy_module = PyModule::import(py, "numpy")?;
+            let numpy_array = numpy_module.getattr("array")?;
+            // Map TypeCode to numpy dtype string
+            let dtype_str = match typecode {
+                TypeCode::Int8 => "int8",
+                TypeCode::Int16 => "int16",
+                TypeCode::Int32 => "int32",
+                TypeCode::Int64 => "int64",
+                TypeCode::UInt8 => "uint8",
+                TypeCode::UInt16 => "uint16",
+                TypeCode::UInt32 => "uint32",
+                TypeCode::UInt64 => "uint64",
+                TypeCode::Float32 => "float32",
+                TypeCode::Float64 => "float64",
+            };
+            let dtype = numpy_module.getattr("dtype")?.call1((dtype_str,))?;
+            let arr = numpy_array.call1((PyList::empty(py),))?;
+            Ok(arr.call_method1("astype", (dtype,))?.to_object(py))
+        }
+        InputType::ArrayArray | InputType::MemoryView => {
+            // Create array.array
+            let array_module = PyModule::import(py, "array")?;
+            let array_type = array_module.getattr("array")?;
+            let typecode_char = typecode.as_char();
+            Ok(array_type
+                .call1((typecode_char, PyList::empty(py)))?
+                .to_object(py))
+        }
+    }
+}
+
+/// Create result array from list based on input type
+fn create_result_array_from_list(
+    py: Python,
+    typecode: TypeCode,
+    input_type: InputType,
+    values: &PyList,
+) -> PyResult<PyObject> {
+    match input_type {
+        InputType::NumPyArray => {
+            // Create numpy array from list
+            let numpy_module = PyModule::import(py, "numpy")?;
+            let numpy_array = numpy_module.getattr("array")?;
+            // Map TypeCode to numpy dtype string
+            let dtype_str = match typecode {
+                TypeCode::Int8 => "int8",
+                TypeCode::Int16 => "int16",
+                TypeCode::Int32 => "int32",
+                TypeCode::Int64 => "int64",
+                TypeCode::UInt8 => "uint8",
+                TypeCode::UInt16 => "uint16",
+                TypeCode::UInt32 => "uint32",
+                TypeCode::UInt64 => "uint64",
+                TypeCode::Float32 => "float32",
+                TypeCode::Float64 => "float64",
+            };
+            let dtype = numpy_module.getattr("dtype")?.call1((dtype_str,))?;
+            let arr = numpy_array.call1((values,))?;
+            Ok(arr.call_method1("astype", (dtype,))?.to_object(py))
+        }
+        InputType::ArrayArray | InputType::MemoryView => {
+            // Create array.array
+            let array_module = PyModule::import(py, "array")?;
+            let array_type = array_module.getattr("array")?;
+            let typecode_char = typecode.as_char();
+            Ok(array_type.call1((typecode_char, values))?.to_object(py))
+        }
+    }
 }
 
 // Parallel execution thresholds
@@ -208,11 +469,12 @@ where
     Ok(())
 }
 
-/// Sum operation for array.array
+/// Sum operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
 fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
-    validate_array_array(array)?;
-    let typecode = get_typecode(array)?;
+    let input_type = detect_input_type(array)?;
+    validate_for_operation(array, input_type, false)?;
+    let typecode = get_typecode_unified(array, input_type)?;
 
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
@@ -313,11 +575,12 @@ fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
     }
 }
 
-/// Scale operation (in-place) for array.array
+/// Scale operation (in-place) for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
 fn scale(py: Python, array: &PyAny, factor: f64) -> PyResult<()> {
-    validate_array_array(array)?;
-    let typecode = get_typecode(array)?;
+    let input_type = detect_input_type(array)?;
+    validate_for_operation(array, input_type, true)?;
+    let typecode = get_typecode_unified(array, input_type)?;
 
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     let len = get_array_len(array)?;
@@ -387,6 +650,7 @@ fn map_impl<T>(
     buffer: &PyBuffer<T>,
     callable: &PyAny,
     typecode: TypeCode,
+    input_type: InputType,
 ) -> PyResult<PyObject>
 where
     T: Element + Copy + pyo3::ToPyObject,
@@ -395,90 +659,83 @@ where
         .as_slice(py)
         .ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
 
-    let array_module = PyModule::import(py, "array")?;
-    let array_type = array_module.getattr("array")?;
-    let typecode_char = typecode.as_char();
-    let result_array = array_type.call1((typecode_char, PyList::empty(py)))?;
+    let result_list = PyList::empty(py);
 
     for cell in slice.iter() {
         let value = cell.get();
         let value_obj = value.to_object(py);
         let result = callable.call1((value_obj,))?;
-        result_array.call_method1("append", (result,))?;
+        result_list.append(result)?;
     }
 
-    Ok(result_array.to_object(py))
+    create_result_array_from_list(py, typecode, input_type, result_list)
 }
 
-/// Map operation for array.array
+/// Map operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
 fn map(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<PyObject> {
-    validate_array_array(array)?;
-    let typecode = get_typecode(array)?;
+    let input_type = detect_input_type(array)?;
+    validate_for_operation(array, input_type, false)?;
+    let typecode = get_typecode_unified(array, input_type)?;
     let callable = r#fn.as_ref(py);
 
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
-        let array_module = PyModule::import(py, "array")?;
-        let array_type = array_module.getattr("array")?;
-        let typecode_char = typecode.as_char();
-        return Ok(array_type
-            .call1((typecode_char, PyList::empty(py)))?
-            .to_object(py));
+        return create_empty_result_array(py, typecode, input_type);
     }
 
     match typecode {
         TypeCode::Int8 => {
             let buffer = PyBuffer::<i8>::get(array)?;
-            map_impl(py, &buffer, callable, typecode)
+            map_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::Int16 => {
             let buffer = PyBuffer::<i16>::get(array)?;
-            map_impl(py, &buffer, callable, typecode)
+            map_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::Int32 => {
             let buffer = PyBuffer::<i32>::get(array)?;
-            map_impl(py, &buffer, callable, typecode)
+            map_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::Int64 => {
             let itemsize = get_itemsize(array)?;
             if itemsize == 4 {
                 let buffer = PyBuffer::<i32>::get(array)?;
-                map_impl(py, &buffer, callable, typecode)
+                map_impl(py, &buffer, callable, typecode, input_type)
             } else {
                 let buffer = PyBuffer::<i64>::get(array)?;
-                map_impl(py, &buffer, callable, typecode)
+                map_impl(py, &buffer, callable, typecode, input_type)
             }
         }
         TypeCode::UInt8 => {
             let buffer = PyBuffer::<u8>::get(array)?;
-            map_impl(py, &buffer, callable, typecode)
+            map_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::UInt16 => {
             let buffer = PyBuffer::<u16>::get(array)?;
-            map_impl(py, &buffer, callable, typecode)
+            map_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::UInt32 => {
             let buffer = PyBuffer::<u32>::get(array)?;
-            map_impl(py, &buffer, callable, typecode)
+            map_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::UInt64 => {
             let itemsize = get_itemsize(array)?;
             if itemsize == 4 {
                 let buffer = PyBuffer::<u32>::get(array)?;
-                map_impl(py, &buffer, callable, typecode)
+                map_impl(py, &buffer, callable, typecode, input_type)
             } else {
                 let buffer = PyBuffer::<u64>::get(array)?;
-                map_impl(py, &buffer, callable, typecode)
+                map_impl(py, &buffer, callable, typecode, input_type)
             }
         }
         TypeCode::Float32 => {
             let buffer = PyBuffer::<f32>::get(array)?;
-            map_impl(py, &buffer, callable, typecode)
+            map_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::Float64 => {
             let buffer = PyBuffer::<f64>::get(array)?;
-            map_impl(py, &buffer, callable, typecode)
+            map_impl(py, &buffer, callable, typecode, input_type)
         }
     }
 }
@@ -503,11 +760,12 @@ where
     Ok(())
 }
 
-/// Map in-place operation for array.array
+/// Map in-place operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
 fn map_inplace(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<()> {
-    validate_array_array(array)?;
-    let typecode = get_typecode(array)?;
+    let input_type = detect_input_type(array)?;
+    validate_for_operation(array, input_type, true)?;
+    let typecode = get_typecode_unified(array, input_type)?;
     let callable = r#fn.as_ref(py);
 
     // Handle empty arrays early to avoid buffer alignment issues on macOS
@@ -577,6 +835,7 @@ fn filter_impl<T>(
     buffer: &PyBuffer<T>,
     predicate: &PyAny,
     typecode: TypeCode,
+    input_type: InputType,
 ) -> PyResult<PyObject>
 where
     T: Element + Copy + pyo3::ToPyObject,
@@ -585,10 +844,7 @@ where
         .as_slice(py)
         .ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
 
-    let array_module = PyModule::import(py, "array")?;
-    let array_type = array_module.getattr("array")?;
-    let typecode_char = typecode.as_char();
-    let result_array = array_type.call1((typecode_char, PyList::empty(py)))?;
+    let result_list = PyList::empty(py);
 
     for cell in slice.iter() {
         let value = cell.get();
@@ -596,82 +852,78 @@ where
         let result = predicate.call1((value_obj.clone(),))?;
         let should_include: bool = result.extract()?;
         if should_include {
-            result_array.call_method1("append", (value_obj,))?;
+            result_list.append(value_obj)?;
         }
     }
 
-    Ok(result_array.to_object(py))
+    create_result_array_from_list(py, typecode, input_type, result_list)
 }
 
-/// Filter operation for array.array
+/// Filter operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
 fn filter(py: Python, array: &PyAny, predicate: PyObject) -> PyResult<PyObject> {
-    validate_array_array(array)?;
-    let typecode = get_typecode(array)?;
+    let input_type = detect_input_type(array)?;
+    validate_for_operation(array, input_type, false)?;
+    let typecode = get_typecode_unified(array, input_type)?;
     let callable = predicate.as_ref(py);
 
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
-        let array_module = PyModule::import(py, "array")?;
-        let array_type = array_module.getattr("array")?;
-        let typecode_char = typecode.as_char();
-        return Ok(array_type
-            .call1((typecode_char, PyList::empty(py)))?
-            .to_object(py));
+        return create_empty_result_array(py, typecode, input_type);
     }
 
     match typecode {
         TypeCode::Int8 => {
             let buffer = PyBuffer::<i8>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode)
+            filter_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::Int16 => {
             let buffer = PyBuffer::<i16>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode)
+            filter_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::Int32 => {
             let buffer = PyBuffer::<i32>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode)
+            filter_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::Int64 => {
             let itemsize = get_itemsize(array)?;
             if itemsize == 4 {
                 let buffer = PyBuffer::<i32>::get(array)?;
-                filter_impl(py, &buffer, callable, typecode)
+                filter_impl(py, &buffer, callable, typecode, input_type)
             } else {
                 let buffer = PyBuffer::<i64>::get(array)?;
-                filter_impl(py, &buffer, callable, typecode)
+                filter_impl(py, &buffer, callable, typecode, input_type)
             }
         }
         TypeCode::UInt8 => {
             let buffer = PyBuffer::<u8>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode)
+            filter_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::UInt16 => {
             let buffer = PyBuffer::<u16>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode)
+            filter_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::UInt32 => {
             let buffer = PyBuffer::<u32>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode)
+            filter_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::UInt64 => {
             let itemsize = get_itemsize(array)?;
             if itemsize == 4 {
                 let buffer = PyBuffer::<u32>::get(array)?;
-                filter_impl(py, &buffer, callable, typecode)
+                filter_impl(py, &buffer, callable, typecode, input_type)
             } else {
                 let buffer = PyBuffer::<u64>::get(array)?;
-                filter_impl(py, &buffer, callable, typecode)
+                filter_impl(py, &buffer, callable, typecode, input_type)
             }
         }
         TypeCode::Float32 => {
             let buffer = PyBuffer::<f32>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode)
+            filter_impl(py, &buffer, callable, typecode, input_type)
         }
         TypeCode::Float64 => {
             let buffer = PyBuffer::<f64>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode)
+            filter_impl(py, &buffer, callable, typecode, input_type)
         }
     }
 }
@@ -718,7 +970,7 @@ where
     Ok(acc)
 }
 
-/// Reduce operation for array.array
+/// Reduce operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
 fn reduce(
     py: Python,
@@ -726,8 +978,9 @@ fn reduce(
     r#fn: PyObject,
     initial: Option<PyObject>,
 ) -> PyResult<PyObject> {
-    validate_array_array(array)?;
-    let typecode = get_typecode(array)?;
+    let input_type = detect_input_type(array)?;
+    validate_for_operation(array, input_type, false)?;
+    let typecode = get_typecode_unified(array, input_type)?;
     let callable = r#fn.as_ref(py);
 
     // Handle empty arrays early to avoid buffer alignment issues on macOS

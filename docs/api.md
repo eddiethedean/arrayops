@@ -4,11 +4,11 @@ Complete API documentation for the `arrayops` package.
 
 ## Overview
 
-`arrayops` provides fast, Rust-accelerated operations for Python's built-in `array.array` type. All operations work directly with `array.array` objects without requiring new types or conversions.
+`arrayops` provides fast, Rust-accelerated operations for Python's built-in `array.array` type, `numpy.ndarray` (1D arrays), and Python `memoryview` objects. All operations work directly with these types without requiring new types or conversions.
 
 ## Supported Types
 
-`arrayops` supports all numeric `array.array` typecodes:
+`arrayops` supports all numeric `array.array` typecodes, `numpy.ndarray` (1D, contiguous), and `memoryview` objects:
 
 | Type | Code | Description | Size |
 |------|------|-------------|------|
@@ -30,15 +30,18 @@ Complete API documentation for the `arrayops` package.
 Compute the sum of all elements in an array.
 
 **Parameters:**
-- `arr` (`array.array`): Input array with numeric type. Must be one of: `b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`, `f`, `d`
+- `arr` (`array.array`, `numpy.ndarray`, or `memoryview`): Input array with numeric type. Must be one of: `b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`, `f`, `d`
+  - For `numpy.ndarray`: must be 1-dimensional and contiguous (C_CONTIGUOUS or F_CONTIGUOUS)
+  - For `memoryview`: read-only or writable memoryview objects are supported
 
 **Returns:**
 - `int`: For integer arrays (`b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`)
 - `float`: For float arrays (`f`, `d`)
 
 **Raises:**
-- `TypeError`: If input is not an `array.array` instance
+- `TypeError`: If input is not an `array.array`, `numpy.ndarray`, or `memoryview`
 - `TypeError`: If array uses an unsupported typecode
+- `TypeError`: If `numpy.ndarray` is not 1D or not contiguous
 
 **Notes:**
 - Empty arrays return `0` (integer) or `0.0` (float)
@@ -81,15 +84,19 @@ print(result)  # 0
 Scale all elements of an array in-place by a factor.
 
 **Parameters:**
-- `arr` (`array.array`): Input array with numeric type (modified in-place). Must be one of: `b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`, `f`, `d`
+- `arr` (`array.array`, `numpy.ndarray`, or `memoryview`): Input array with numeric type (modified in-place). Must be one of: `b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`, `f`, `d`
+  - For `numpy.ndarray`: must be 1D and contiguous
+  - For `memoryview`: must be writable (read-only memoryviews raise ValueError)
 - `factor` (`float`): Scaling factor to multiply each element by
 
 **Returns:**
 - `None`: This function modifies the array in-place and returns nothing
 
 **Raises:**
-- `TypeError`: If input is not an `array.array` instance
+- `TypeError`: If input is not an `array.array`, `numpy.ndarray`, or `memoryview`
 - `TypeError`: If array uses an unsupported typecode
+- `TypeError`: If `numpy.ndarray` is not 1D or not contiguous
+- `ValueError`: If `memoryview` is read-only
 
 **Notes:**
 - The array is modified in-place; no new array is created
@@ -131,20 +138,23 @@ print(list(arr))  # [0, 0, 0]
 
 ---
 
-### `map(arr, fn) -> array.array`
+### `map(arr, fn) -> array.array | numpy.ndarray`
 
 Apply a function to each element, returning a new array.
 
 **Parameters:**
-- `arr` (`array.array`): Input array with numeric type. Must be one of: `b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`, `f`, `d`
+- `arr` (`array.array`, `numpy.ndarray`, or `memoryview`): Input array with numeric type. Must be one of: `b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`, `f`, `d`
 - `fn` (callable): Function that takes one element and returns a value of the same type as the input array
 
 **Returns:**
-- `array.array`: New array with the same type as the input array
+- `array.array` or `numpy.ndarray`: New array with the same type as the input array
+  - Returns `numpy.ndarray` if input is `numpy.ndarray`
+  - Returns `array.array` if input is `array.array` or `memoryview`
 
 **Raises:**
-- `TypeError`: If input is not an `array.array` instance
+- `TypeError`: If input is not an `array.array`, `numpy.ndarray`, or `memoryview`
 - `TypeError`: If array uses an unsupported typecode
+- `TypeError`: If `numpy.ndarray` is not 1D or not contiguous
 - `TypeError`: If `fn` is not callable
 - `TypeError`: If function returns a value that cannot be converted to the array's type
 
@@ -188,17 +198,20 @@ print(list(halved))  # [0.75, 1.25, 1.75]
 Apply a function to each element in-place.
 
 **Parameters:**
-- `arr` (`array.array`): Input array with numeric type (modified in-place). Must be one of: `b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`, `f`, `d`
+- `arr` (`array.array`, `numpy.ndarray`, or `memoryview`): Input array with numeric type (modified in-place). Must be one of: `b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`, `f`, `d`
+  - For `memoryview`: must be writable
 - `fn` (callable): Function that takes one element and returns a value of the same type as the input array
 
 **Returns:**
 - `None`: This function modifies the array in-place and returns nothing
 
 **Raises:**
-- `TypeError`: If input is not an `array.array` instance
+- `TypeError`: If input is not an `array.array`, `numpy.ndarray`, or `memoryview`
 - `TypeError`: If array uses an unsupported typecode
+- `TypeError`: If `numpy.ndarray` is not 1D or not contiguous
 - `TypeError`: If `fn` is not callable
 - `TypeError`: If function returns a value that cannot be converted to the array's type
+- `ValueError`: If `memoryview` is read-only
 
 **Notes:**
 - The array is modified in-place; no new array is created
@@ -230,20 +243,23 @@ print(list(arr))  # [4, 16, 36, 64, 100]
 
 ---
 
-### `filter(arr, predicate) -> array.array`
+### `filter(arr, predicate) -> array.array | numpy.ndarray`
 
 Filter elements using a predicate function, returning a new array.
 
 **Parameters:**
-- `arr` (`array.array`): Input array with numeric type. Must be one of: `b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`, `f`, `d`
+- `arr` (`array.array`, `numpy.ndarray`, or `memoryview`): Input array with numeric type. Must be one of: `b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`, `f`, `d`
 - `predicate` (callable): Function that takes one element and returns `bool`
 
 **Returns:**
-- `array.array`: New array containing only elements where `predicate(element)` is `True` (same type as input)
+- `array.array` or `numpy.ndarray`: New array containing only elements where `predicate(element)` is `True`
+  - Returns `numpy.ndarray` if input is `numpy.ndarray`
+  - Returns `array.array` if input is `array.array` or `memoryview`
 
 **Raises:**
-- `TypeError`: If input is not an `array.array` instance
+- `TypeError`: If input is not an `array.array`, `numpy.ndarray`, or `memoryview`
 - `TypeError`: If array uses an unsupported typecode
+- `TypeError`: If `numpy.ndarray` is not 1D or not contiguous
 - `TypeError`: If `predicate` is not callable
 - `TypeError`: If predicate doesn't return `bool`
 
@@ -287,7 +303,7 @@ print(list(positives))  # [1, 2]
 Reduce array to a single value using a binary function.
 
 **Parameters:**
-- `arr` (`array.array`): Input array with numeric type. Must be one of: `b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`, `f`, `d`
+- `arr` (`array.array`, `numpy.ndarray`, or `memoryview`): Input array with numeric type. Must be one of: `b`, `B`, `h`, `H`, `i`, `I`, `l`, `L`, `f`, `d`
 - `fn` (callable): Binary function that takes `(accumulator, element)` and returns a value
 - `initial` (optional): Initial value for the accumulator. If not provided, uses the first element as initial value.
 
@@ -295,8 +311,9 @@ Reduce array to a single value using a binary function.
 - Any: Result of the reduction (type depends on function and initial value)
 
 **Raises:**
-- `TypeError`: If input is not an `array.array` instance
+- `TypeError`: If input is not an `array.array`, `numpy.ndarray`, or `memoryview`
 - `TypeError`: If array uses an unsupported typecode
+- `TypeError`: If `numpy.ndarray` is not 1D or not contiguous
 - `TypeError`: If `fn` is not callable
 - `ValueError`: If array is empty and no initial value is provided
 
@@ -385,11 +402,31 @@ except ValueError as e:
 ## Type Safety
 
 All functions validate their inputs:
-- Type checking ensures only `array.array` instances are accepted
+- Type checking ensures only `array.array`, `numpy.ndarray` (1D, contiguous), or `memoryview` instances are accepted
 - Typecode validation ensures only numeric types are supported
 - Clear error messages guide users to correct usage
 
 For static type checking with mypy, type stubs are provided in `arrayops._arrayops`.
+
+## NumPy Integration
+
+`arrayops` supports `numpy.ndarray` objects with the following requirements:
+- Arrays must be 1-dimensional (`ndim == 1`)
+- Arrays must be contiguous (either `C_CONTIGUOUS` or `F_CONTIGUOUS`)
+- All numeric dtypes are supported (int8/16/32/64, uint8/16/32/64, float32/64)
+- NumPy is an optional dependency - the package works without NumPy installed
+
+When NumPy arrays are used with `map` or `filter`, the result is also a `numpy.ndarray` with the same dtype as the input.
+
+## Memoryview Support
+
+`arrayops` supports Python's built-in `memoryview` objects:
+- Works with both read-only and writable memoryviews
+- In-place operations (`scale`, `map_inplace`) require writable memoryviews
+- All numeric format types are supported
+- `map` and `filter` operations return `array.array` (memoryviews are read-only views)
+
+This enables interoperability with binary data, network protocols, and other buffer-like objects.
 
 ## Performance Characteristics
 

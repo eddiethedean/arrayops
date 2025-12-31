@@ -1,0 +1,3 @@
+# This file ensures the _static directory is tracked by git
+# Static files for documentation (CSS, images, etc.) go here
+

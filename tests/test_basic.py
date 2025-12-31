@@ -4,6 +4,12 @@ import array
 import pytest
 import sys
 
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+
 
 @pytest.fixture
 def int_array():
@@ -992,3 +998,223 @@ class TestReduceRobust:
         result = arrayops.reduce(arr, lambda acc, x: acc * x)
         # Python handles overflow, so this should work
         assert result == 100 * 200 * 300
+
+
+@pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
+class TestNumPyInterop:
+    """Tests for NumPy array interoperability."""
+
+    def test_sum_numpy_int32(self):
+        """Test sum with numpy int32 array."""
+        import arrayops
+
+        arr = np.array([1, 2, 3, 4, 5], dtype=np.int32)
+        result = arrayops.sum(arr)
+        assert result == 15
+        assert isinstance(result, (int, np.integer))
+
+    def test_sum_numpy_float64(self):
+        """Test sum with numpy float64 array."""
+        import arrayops
+
+        arr = np.array([1.5, 2.5, 3.5], dtype=np.float64)
+        result = arrayops.sum(arr)
+        assert abs(result - 7.5) < 1e-10
+
+    def test_sum_numpy_all_types(self):
+        """Test sum with all numpy dtypes."""
+        import arrayops
+
+        test_cases = [
+            (np.int8, [1, 2, 3]),
+            (np.int16, [1, 2, 3]),
+            (np.int32, [1, 2, 3]),
+            (np.int64, [1, 2, 3]),
+            (np.uint8, [1, 2, 3]),
+            (np.uint16, [1, 2, 3]),
+            (np.uint32, [1, 2, 3]),
+            (np.uint64, [1, 2, 3]),
+            (np.float32, [1.5, 2.5, 3.5]),
+            (np.float64, [1.5, 2.5, 3.5]),
+        ]
+
+        for dtype, values in test_cases:
+            arr = np.array(values, dtype=dtype)
+            result = arrayops.sum(arr)
+            expected = sum(values)
+            assert abs(result - expected) < 1e-6, f"Failed for dtype {dtype}"
+
+    def test_sum_numpy_empty(self):
+        """Test sum with empty numpy array."""
+        import arrayops
+
+        arr = np.array([], dtype=np.int32)
+        result = arrayops.sum(arr)
+        assert result == 0
+
+    def test_scale_numpy_array(self):
+        """Test scale with numpy array."""
+        import arrayops
+
+        arr = np.array([1, 2, 3, 4, 5], dtype=np.int32)
+        arrayops.scale(arr, 2.0)
+        expected = np.array([2, 4, 6, 8, 10], dtype=np.int32)
+        np.testing.assert_array_equal(arr, expected)
+
+    def test_map_numpy_returns_numpy(self):
+        """Test map with numpy array returns numpy array."""
+        import arrayops
+
+        arr = np.array([1, 2, 3, 4, 5], dtype=np.int32)
+        result = arrayops.map(arr, lambda x: x * 2)
+        assert isinstance(result, np.ndarray)
+        assert result.dtype == np.int32
+        np.testing.assert_array_equal(result, np.array([2, 4, 6, 8, 10], dtype=np.int32))
+
+    def test_filter_numpy_returns_numpy(self):
+        """Test filter with numpy array returns numpy array."""
+        import arrayops
+
+        arr = np.array([1, 2, 3, 4, 5], dtype=np.int32)
+        result = arrayops.filter(arr, lambda x: x % 2 == 0)
+        assert isinstance(result, np.ndarray)
+        assert result.dtype == np.int32
+        np.testing.assert_array_equal(result, np.array([2, 4], dtype=np.int32))
+
+    def test_reduce_numpy(self):
+        """Test reduce with numpy array."""
+        import arrayops
+
+        arr = np.array([1, 2, 3, 4, 5], dtype=np.int32)
+        result = arrayops.reduce(arr, lambda acc, x: acc + x)
+        assert result == 15
+
+    def test_numpy_multidimensional_error(self):
+        """Test that multi-dimensional numpy arrays raise error."""
+        import arrayops
+
+        arr = np.array([[1, 2], [3, 4]], dtype=np.int32)
+        with pytest.raises(TypeError, match="1-dimensional"):
+            arrayops.sum(arr)
+
+    def test_numpy_non_contiguous_error(self):
+        """Test that non-contiguous numpy arrays raise error."""
+        import arrayops
+
+        # Create a non-contiguous array by taking every other element
+        arr = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=np.int32)
+        arr_non_contig = arr[::2]  # Strided view, non-contiguous
+        with pytest.raises(TypeError, match="contiguous"):
+            arrayops.sum(arr_non_contig)
+
+
+class TestMemoryViewInterop:
+    """Tests for memoryview interoperability."""
+
+    def test_sum_memoryview_from_array(self):
+        """Test sum with memoryview from array.array."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3, 4, 5])
+        mv = memoryview(arr)
+        result = arrayops.sum(mv)
+        assert result == 15
+
+    def test_sum_memoryview_from_bytes(self):
+        """Test sum with memoryview from bytes."""
+        import arrayops
+
+        # Create bytes with int32 values
+        arr = array.array("i", [1, 2, 3])
+        data = arr.tobytes()
+        mv = memoryview(data).cast("i")
+        result = arrayops.sum(mv)
+        assert result == 6
+
+    def test_scale_memoryview_writable(self):
+        """Test scale with writable memoryview."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3, 4, 5])
+        mv = memoryview(arr)  # Writable memoryview
+        arrayops.scale(mv, 2.0)
+        assert list(arr) == [2, 4, 6, 8, 10]
+
+    def test_scale_memoryview_readonly_error(self):
+        """Test scale with read-only memoryview raises error."""
+        import arrayops
+
+        data = array.array("i", [1, 2, 3]).tobytes()
+        mv = memoryview(data)  # Read-only memoryview
+        with pytest.raises(ValueError, match="read-only"):
+            arrayops.scale(mv, 2.0)
+
+    def test_map_memoryview_returns_array(self):
+        """Test map with memoryview returns array.array."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3, 4, 5])
+        mv = memoryview(arr)
+        result = arrayops.map(mv, lambda x: x * 2)
+        assert isinstance(result, array.array)
+        assert list(result) == [2, 4, 6, 8, 10]
+
+    def test_filter_memoryview_returns_array(self):
+        """Test filter with memoryview returns array.array."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3, 4, 5])
+        mv = memoryview(arr)
+        result = arrayops.filter(mv, lambda x: x % 2 == 0)
+        assert isinstance(result, array.array)
+        assert list(result) == [2, 4]
+
+    def test_reduce_memoryview(self):
+        """Test reduce with memoryview."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3, 4, 5])
+        mv = memoryview(arr)
+        result = arrayops.reduce(mv, lambda acc, x: acc + x)
+        assert result == 15
+
+    def test_memoryview_all_types(self):
+        """Test memoryview with different format types."""
+        import arrayops
+
+        test_cases = [
+            ("b", array.array("b", [1, 2, 3])),
+            ("B", array.array("B", [1, 2, 3])),
+            ("h", array.array("h", [1, 2, 3])),
+            ("H", array.array("H", [1, 2, 3])),
+            ("i", array.array("i", [1, 2, 3])),
+            ("I", array.array("I", [1, 2, 3])),
+            ("l", array.array("l", [1, 2, 3])),
+            ("L", array.array("L", [1, 2, 3])),
+            ("f", array.array("f", [1.5, 2.5, 3.5])),
+            ("d", array.array("d", [1.5, 2.5, 3.5])),
+        ]
+
+        for typecode, arr in test_cases:
+            mv = memoryview(arr)
+            result = arrayops.sum(mv)
+            expected = sum(arr)
+            assert abs(result - expected) < 1e-6, f"Failed for typecode {typecode}"
+
+    def test_map_inplace_memoryview_writable(self):
+        """Test map_inplace with writable memoryview."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3, 4, 5])
+        mv = memoryview(arr)
+        arrayops.map_inplace(mv, lambda x: x * 2)
+        assert list(arr) == [2, 4, 6, 8, 10]
+
+    def test_map_inplace_memoryview_readonly_error(self):
+        """Test map_inplace with read-only memoryview raises error."""
+        import arrayops
+
+        data = array.array("i", [1, 2, 3]).tobytes()
+        mv = memoryview(data)  # Read-only
+        with pytest.raises(ValueError, match="read-only"):
+            arrayops.map_inplace(mv, lambda x: x * 2)

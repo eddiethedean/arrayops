@@ -42,3 +42,9 @@ Thumbs.db
 
 # Maturin
 *.whl
+_build/
+docs/_build/
+docs/_static/*
+!docs/_static/.gitkeep
+docs/_templates/*
+!docs/_templates/.gitkeep

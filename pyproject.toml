@@ -18,6 +18,8 @@ classifiers = [
 dynamic = ["version"]
 description = "Rust-backed acceleration for Python array.array"
 readme = "README.md"
+# Note: NumPy is optional - arrayops works with array.array, numpy.ndarray, and memoryview
+# Install numpy separately if you want to use numpy.ndarray support: pip install numpy
 [project.urls]
 Homepage = "https://github.com/eddiethedean/arrayops"
 Repository = "https://github.com/eddiethedean/arrayops"

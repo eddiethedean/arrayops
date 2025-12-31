@@ -54,21 +54,20 @@ _No items currently in progress_
 ## 📋 Planned Features
 
 ### Phase 3: Interoperability (Medium Priority)
-
-#### NumPy Array Interop
-- [ ] **NumPy array support** - Operate on `numpy.ndarray` objects
+- [x] **NumPy array support** - Operate on `numpy.ndarray` objects
   - Zero-copy access via NumPy's buffer protocol
   - Support for contiguous 1D arrays
   - Type conversion handling
   - Performance: Match or exceed NumPy's built-in operations
   - Optional dependency (only import when NumPy available)
+  - Returns `numpy.ndarray` for `map` and `filter` operations
 
-#### Memoryview Support
-- [ ] **Python memoryview support** - Work with `memoryview` objects
+- [x] **Python memoryview support** - Work with `memoryview` objects
   - Buffer protocol access
   - Type inference from memoryview format
   - Support for both read-only and writable memoryviews
   - Use case: Binary data processing, network protocols
+  - In-place operations require writable memoryviews
 
 ### Phase 4: Advanced Features (Low Priority)
 
@@ -130,10 +129,11 @@ _No items currently in progress_
 ### Q2 2024
 - [x] Implement parallel execution with rayon (completed in Q1 2024)
 - [ ] Complete full SIMD optimizations (infrastructure in place, pending API stabilization)
-- [ ] NumPy interop prototype
+- [x] NumPy interop (completed in Q1 2024)
+- [x] Memoryview support (completed in Q1 2024)
 
 ### Q3 2024
-- [ ] Complete NumPy and memoryview support
+- [x] Complete NumPy and memoryview support (completed in Q1 2024)
 - [ ] Statistical operations
 - [ ] Performance benchmarking suite
 
@@ -203,5 +203,5 @@ Priority will be given to:
 
 ---
 
-_Last updated: Phase 2 completed (parallel execution for sum/scale, SIMD infrastructure framework)_
+_Last updated: Phase 3 completed (NumPy array interop and memoryview support)_
 
