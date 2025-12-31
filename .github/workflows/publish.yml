@@ -145,6 +145,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up QEMU
+        if: matrix.os == 'ubuntu-latest' && matrix.architecture == 'aarch64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - name: Build wheel (Linux - manylinux)
         if: matrix.os == 'ubuntu-latest'
         env:
