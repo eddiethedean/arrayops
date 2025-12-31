@@ -37,11 +37,11 @@ jobs:
 
     - name: Build package (Linux)
       if: runner.os == 'Linux'
-      run: maturin build --release --skip-auditwheel
+      run: python -m maturin build --release --skip-auditwheel
 
     - name: Build package (macOS/Windows)
       if: runner.os != 'Linux'
-      run: maturin build --release
+      run: python -m maturin build --release
 
     - name: Install package
       shell: bash
@@ -78,7 +78,7 @@ jobs:
       run: pip install pytest
 
     - name: Build package with features
-      run: maturin build --release --features ${{ matrix.features }} --skip-auditwheel
+      run: python -m maturin build --release --features ${{ matrix.features }} --skip-auditwheel
 
     - name: Install package
       shell: bash
