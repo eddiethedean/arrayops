@@ -23,6 +23,7 @@ MANIFEST
 venv/
 env/
 ENV/
+.venv/
 benchmark_results.json/
 cobertura.xml
 coverage.xml

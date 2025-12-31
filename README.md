@@ -20,10 +20,9 @@ Fast, lightweight numeric operations for Python's `array.array`, `numpy.ndarray`
 - ⚡ **High Performance**: 10-100x faster than pure Python loops using Rust-accelerated operations
 - 🔒 **Memory Safe**: Zero-copy buffer access with Rust's safety guarantees
 - 📦 **Lightweight**: No dependencies beyond Rust standard library (optional: parallel execution via `rayon`)
-- 🔌 **Compatible**: Works directly with Python's `array.array`, `numpy.ndarray` (1D), and `memoryview` - no new types
+- 🔌 **Compatible**: Works directly with Python's `array.array`, `numpy.ndarray` (1D), `memoryview`, and Apache Arrow buffers - no new types
 - ✅ **Fully Tested**: 100% code coverage (Python and Rust)
 - 🎯 **Type Safe**: Full mypy type checking support
-- 🚀 **Optional Optimizations**: Parallel execution and SIMD support via feature flags
 
 ## 🚀 Quick Start
 
@@ -58,13 +57,40 @@ ao.scale(data, 2.0)            # In-place: [2, 4, 6, 8, 10]
 doubled = ao.map(data, lambda x: x * 2)  # New array: [4, 8, 12, 16, 20]
 evens = ao.filter(data, lambda x: x % 2 == 0)  # [4, 8, 12, 16, 20]
 product = ao.reduce(data, lambda acc, x: acc * x, initial=1)  # 3840
+
+# Statistical operations
+avg = ao.mean(data)            # 3.0
+min_val = ao.min(data)         # 1
+max_val = ao.max(data)         # 5
+std_dev = ao.std(data)         # 1.41...
+median_val = ao.median(data)   # 3
+
+# Element-wise operations
+arr2 = array.array('i', [10, 20, 30, 40, 50])
+summed = ao.add(data, arr2)    # [11, 22, 33, 44, 55]
+product = ao.multiply(data, arr2)  # [10, 40, 90, 160, 250]
+ao.clip(data, 2.0, 4.0)        # In-place: [2, 2, 3, 4, 4]
+ao.normalize(data)             # In-place: [0.0, 0.25, 0.5, 0.75, 1.0]
+
+# Array manipulation
+ao.reverse(data)               # In-place: [5, 4, 3, 2, 1]
+ao.sort(data)                  # In-place: [1, 2, 3, 4, 5]
+unique_vals = ao.unique(data)  # [1, 2, 3, 4, 5]
+
+# Zero-copy slicing
+sliced = ao.slice(data, 1, 4)  # Returns memoryview: [2, 3, 4]
+
+# Lazy evaluation (chain operations without intermediate allocations)
+lazy = ao.lazy_array(data)
+result = lazy.map(lambda x: x * 2).filter(lambda x: x > 5).collect()
+# Efficiently chains map and filter, executes only when collect() is called
 ```
 
 **📚 For complete documentation, examples, and API reference, see [arrayops.readthedocs.io](https://arrayops.readthedocs.io/)**
 
 ## 📚 Supported Types
 
-`arrayops` supports all numeric `array.array` typecodes, `numpy.ndarray` (1D, contiguous), and Python `memoryview` objects:
+`arrayops` supports all numeric `array.array` typecodes, `numpy.ndarray` (1D, contiguous), Python `memoryview` objects, and Apache Arrow buffers/arrays:
 
 | Type | Code | Description |
 |------|------|-------------|
@@ -131,6 +157,9 @@ SIMD (Single Instruction, Multiple Data) optimizations are in development:
 | Type safety | ✅ | ✅ | ⚠️ |
 | NumPy interop | ❌ | ✅ (1D only) | ✅ |
 | Memoryview support | ❌ | ✅ | ❌ |
+| Arrow interop | ❌ | ✅ | ✅ |
+| Zero-copy slicing | ❌ | ✅ | ⚠️ |
+| Lazy evaluation | ❌ | ✅ | ❌ |
 | Use case | Binary I/O | Scripting/ETL | Scientific computing |
 
 ## 🏗️ Architecture
@@ -218,7 +247,7 @@ MIT License - see LICENSE file for details.
 
 - Built with [PyO3](https://pyo3.rs/) for Python-Rust interop
 - Built with [maturin](https://github.com/PyO3/maturin) for packaging
-- Inspired by the need for fast array operations without NumPy overhead
+- Inspired by the need for fast, lightweight array operations for Python's built-in array type
 
 ## 📞 Support
 

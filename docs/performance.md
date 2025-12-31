@@ -392,10 +392,10 @@ Use platform-specific profilers:
 
 | Metric | NumPy | arrayops |
 |--------|-------|----------|
-| Speed | Fast | Comparable |
 | Memory | Higher overhead | Lower overhead |
 | Dependencies | Large | Minimal |
-| Use case | Scientific computing | Binary I/O, ETL |
+| Use case | Scientific computing, multi-dimensional arrays | Binary I/O, ETL, 1D arrays |
+| Focus | Feature-rich scientific computing | Lightweight, zero-copy operations |
 
 ## Related Documentation
 

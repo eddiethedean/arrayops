@@ -224,19 +224,51 @@ class TestModuleInitialization:
         """Test that module can be imported when extension is available."""
         import arrayops
 
+        # Check existing functions
         assert hasattr(arrayops, "sum")
         assert hasattr(arrayops, "scale")
         assert hasattr(arrayops, "map")
         assert hasattr(arrayops, "map_inplace")
         assert hasattr(arrayops, "filter")
         assert hasattr(arrayops, "reduce")
+        # Check new statistical functions
+        assert hasattr(arrayops, "mean")
+        assert hasattr(arrayops, "min")
+        assert hasattr(arrayops, "max")
+        assert hasattr(arrayops, "std")
+        assert hasattr(arrayops, "var")
+        assert hasattr(arrayops, "median")
+        # Check new element-wise functions
+        assert hasattr(arrayops, "add")
+        assert hasattr(arrayops, "multiply")
+        assert hasattr(arrayops, "clip")
+        assert hasattr(arrayops, "normalize")
+        # Check new array manipulation functions
+        assert hasattr(arrayops, "reverse")
+        assert hasattr(arrayops, "sort")
+        assert hasattr(arrayops, "unique")
+
+        # Check __all__
         assert "sum" in arrayops.__all__
         assert "scale" in arrayops.__all__
         assert "map" in arrayops.__all__
         assert "map_inplace" in arrayops.__all__
         assert "filter" in arrayops.__all__
         assert "reduce" in arrayops.__all__
-        assert arrayops.__version__ == "0.3.0"
+        assert "mean" in arrayops.__all__
+        assert "min" in arrayops.__all__
+        assert "max" in arrayops.__all__
+        assert "std" in arrayops.__all__
+        assert "var" in arrayops.__all__
+        assert "median" in arrayops.__all__
+        assert "add" in arrayops.__all__
+        assert "multiply" in arrayops.__all__
+        assert "clip" in arrayops.__all__
+        assert "normalize" in arrayops.__all__
+        assert "reverse" in arrayops.__all__
+        assert "sort" in arrayops.__all__
+        assert "unique" in arrayops.__all__
+        assert arrayops.__version__ == "0.4.0"
 
     def test_module_import_error_with_arrayops_in_message(self):
         """Test helpful error message when _arrayops module is missing."""
@@ -1221,3 +1253,498 @@ class TestMemoryViewInterop:
         mv = memoryview(data)  # Read-only
         with pytest.raises(ValueError, match="read-only"):
             arrayops.map_inplace(mv, lambda x: x * 2)
+
+
+class TestStatisticalOperations:
+    """Tests for statistical operations (mean, min, max, std, var, median)."""
+
+    def test_mean_int32(self):
+        """Test mean with int32 array."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3, 4, 5])
+        result = arrayops.mean(arr)
+        assert result == 3.0
+        assert isinstance(result, float)
+
+    def test_mean_float64(self):
+        """Test mean with float64 array."""
+        import arrayops
+
+        arr = array.array("d", [1.5, 2.5, 3.5, 4.5])
+        result = arrayops.mean(arr)
+        assert abs(result - 3.0) < 1e-10
+
+    def test_mean_empty(self):
+        """Test mean with empty array raises ValueError."""
+        import arrayops
+
+        arr = array.array("i", [])
+        with pytest.raises(ValueError, match="mean.*empty"):
+            arrayops.mean(arr)
+
+    def test_min_int32(self):
+        """Test min with int32 array."""
+        import arrayops
+
+        arr = array.array("i", [5, 2, 8, 1, 9])
+        result = arrayops.min(arr)
+        assert result == 1
+        assert isinstance(result, int)
+
+    def test_min_float64(self):
+        """Test min with float64 array."""
+        import arrayops
+
+        arr = array.array("d", [5.5, 2.2, 8.8, 1.1, 9.9])
+        result = arrayops.min(arr)
+        assert abs(result - 1.1) < 1e-10
+
+    def test_min_empty(self):
+        """Test min with empty array raises ValueError."""
+        import arrayops
+
+        arr = array.array("i", [])
+        with pytest.raises(ValueError, match="min.*empty"):
+            arrayops.min(arr)
+
+    def test_max_int32(self):
+        """Test max with int32 array."""
+        import arrayops
+
+        arr = array.array("i", [5, 2, 8, 1, 9])
+        result = arrayops.max(arr)
+        assert result == 9
+        assert isinstance(result, int)
+
+    def test_max_float64(self):
+        """Test max with float64 array."""
+        import arrayops
+
+        arr = array.array("d", [5.5, 2.2, 8.8, 1.1, 9.9])
+        result = arrayops.max(arr)
+        assert abs(result - 9.9) < 1e-10
+
+    def test_max_empty(self):
+        """Test max with empty array raises ValueError."""
+        import arrayops
+
+        arr = array.array("i", [])
+        with pytest.raises(ValueError, match="max.*empty"):
+            arrayops.max(arr)
+
+    def test_std_int32(self):
+        """Test std with int32 array."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3, 4, 5])
+        result = arrayops.std(arr)
+        # Population std: sqrt(sum((x-mean)^2)/n) = sqrt(10/5) = sqrt(2) ≈ 1.414
+        expected = (10.0 / 5.0) ** 0.5
+        assert abs(result - expected) < 1e-10
+
+    def test_std_float64(self):
+        """Test std with float64 array."""
+        import arrayops
+
+        arr = array.array("d", [1.0, 2.0, 3.0, 4.0, 5.0])
+        result = arrayops.std(arr)
+        expected = (10.0 / 5.0) ** 0.5
+        assert abs(result - expected) < 1e-10
+
+    def test_std_empty(self):
+        """Test std with empty array raises ValueError."""
+        import arrayops
+
+        arr = array.array("i", [])
+        with pytest.raises(ValueError, match="var.*empty"):
+            arrayops.std(arr)
+
+    def test_var_int32(self):
+        """Test var with int32 array."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3, 4, 5])
+        result = arrayops.var(arr)
+        # Population var: sum((x-mean)^2)/n = 10/5 = 2.0
+        assert abs(result - 2.0) < 1e-10
+
+    def test_var_float64(self):
+        """Test var with float64 array."""
+        import arrayops
+
+        arr = array.array("d", [1.0, 2.0, 3.0, 4.0, 5.0])
+        result = arrayops.var(arr)
+        assert abs(result - 2.0) < 1e-10
+
+    def test_var_empty(self):
+        """Test var with empty array raises ValueError."""
+        import arrayops
+
+        arr = array.array("i", [])
+        with pytest.raises(ValueError, match="var.*empty"):
+            arrayops.var(arr)
+
+    def test_median_int32_odd(self):
+        """Test median with odd-length int32 array."""
+        import arrayops
+
+        arr = array.array("i", [5, 2, 8, 1, 9])
+        result = arrayops.median(arr)
+        assert result == 5
+        assert isinstance(result, int)
+
+    def test_median_int32_even(self):
+        """Test median with even-length int32 array (returns lower median)."""
+        import arrayops
+
+        arr = array.array("i", [5, 2, 8, 1])
+        result = arrayops.median(arr)
+        # Sorted: [1, 2, 5, 8], lower median = 2
+        assert result == 2
+
+    def test_median_float64(self):
+        """Test median with float64 array."""
+        import arrayops
+
+        arr = array.array("d", [5.5, 2.2, 8.8, 1.1, 9.9])
+        result = arrayops.median(arr)
+        # Sorted: [1.1, 2.2, 5.5, 8.8, 9.9], median = 5.5
+        assert abs(result - 5.5) < 1e-10
+
+    def test_median_empty(self):
+        """Test median with empty array raises ValueError."""
+        import arrayops
+
+        arr = array.array("i", [])
+        with pytest.raises(ValueError, match="median.*empty"):
+            arrayops.median(arr)
+
+    def test_statistical_all_types(self):
+        """Test statistical operations with all numeric types."""
+        import arrayops
+
+        test_cases = [
+            ("b", array.array("b", [1, 2, 3, 4, 5])),
+            ("B", array.array("B", [1, 2, 3, 4, 5])),
+            ("h", array.array("h", [1, 2, 3, 4, 5])),
+            ("H", array.array("H", [1, 2, 3, 4, 5])),
+            ("i", array.array("i", [1, 2, 3, 4, 5])),
+            ("I", array.array("I", [1, 2, 3, 4, 5])),
+            ("l", array.array("l", [1, 2, 3, 4, 5])),
+            ("L", array.array("L", [1, 2, 3, 4, 5])),
+            ("f", array.array("f", [1.0, 2.0, 3.0, 4.0, 5.0])),
+            ("d", array.array("d", [1.0, 2.0, 3.0, 4.0, 5.0])),
+        ]
+
+        for typecode, arr in test_cases:
+            mean_val = arrayops.mean(arr)
+            assert abs(mean_val - 3.0) < 1e-6
+
+            min_val = arrayops.min(arr)
+            assert min_val == 1 or abs(min_val - 1.0) < 1e-6
+
+            max_val = arrayops.max(arr)
+            assert max_val == 5 or abs(max_val - 5.0) < 1e-6
+
+            median_val = arrayops.median(arr)
+            assert median_val == 3 or abs(median_val - 3.0) < 1e-6
+
+    @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
+    def test_mean_numpy(self):
+        """Test mean with NumPy array."""
+        import arrayops
+
+        arr = np.array([1, 2, 3, 4, 5], dtype=np.int32)
+        result = arrayops.mean(arr)
+        assert abs(result - 3.0) < 1e-10
+
+    @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
+    def test_min_max_numpy(self):
+        """Test min/max with NumPy array."""
+        import arrayops
+
+        arr = np.array([5, 2, 8, 1, 9], dtype=np.int32)
+        assert arrayops.min(arr) == 1
+        assert arrayops.max(arr) == 9
+
+
+class TestElementWiseOperations:
+    """Tests for element-wise operations (add, multiply, clip, normalize)."""
+
+    def test_add_int32(self):
+        """Test add with int32 arrays."""
+        import arrayops
+
+        arr1 = array.array("i", [1, 2, 3, 4, 5])
+        arr2 = array.array("i", [10, 20, 30, 40, 50])
+        result = arrayops.add(arr1, arr2)
+        assert list(result) == [11, 22, 33, 44, 55]
+        assert isinstance(result, array.array)
+
+    def test_add_float64(self):
+        """Test add with float64 arrays."""
+        import arrayops
+
+        arr1 = array.array("d", [1.5, 2.5, 3.5])
+        arr2 = array.array("d", [10.0, 20.0, 30.0])
+        result = arrayops.add(arr1, arr2)
+        assert all(abs(a - b) < 1e-10 for a, b in zip(result, [11.5, 22.5, 33.5]))
+
+    def test_add_mismatched_length(self):
+        """Test add with mismatched array lengths raises ValueError."""
+        import arrayops
+
+        arr1 = array.array("i", [1, 2, 3])
+        arr2 = array.array("i", [1, 2])
+        with pytest.raises(ValueError, match="same length"):
+            arrayops.add(arr1, arr2)
+
+    def test_add_mismatched_type(self):
+        """Test add with mismatched types raises TypeError."""
+        import arrayops
+
+        arr1 = array.array("i", [1, 2, 3])
+        arr2 = array.array("f", [1.0, 2.0, 3.0])
+        with pytest.raises(TypeError, match="same type"):
+            arrayops.add(arr1, arr2)
+
+    def test_multiply_int32(self):
+        """Test multiply with int32 arrays."""
+        import arrayops
+
+        arr1 = array.array("i", [1, 2, 3, 4, 5])
+        arr2 = array.array("i", [2, 3, 4, 5, 6])
+        result = arrayops.multiply(arr1, arr2)
+        assert list(result) == [2, 6, 12, 20, 30]
+
+    def test_multiply_float64(self):
+        """Test multiply with float64 arrays."""
+        import arrayops
+
+        arr1 = array.array("d", [1.5, 2.5, 3.5])
+        arr2 = array.array("d", [2.0, 3.0, 4.0])
+        result = arrayops.multiply(arr1, arr2)
+        assert all(abs(a - b) < 1e-10 for a, b in zip(result, [3.0, 7.5, 14.0]))
+
+    def test_multiply_empty(self):
+        """Test multiply with empty arrays."""
+        import arrayops
+
+        arr1 = array.array("i", [])
+        arr2 = array.array("i", [])
+        result = arrayops.multiply(arr1, arr2)
+        assert len(result) == 0
+
+    def test_clip_int32(self):
+        """Test clip with int32 array."""
+        import arrayops
+
+        arr = array.array("i", [1, 5, 10, 15, 20])
+        arrayops.clip(arr, 5.0, 15.0)
+        assert list(arr) == [5, 5, 10, 15, 15]
+
+    def test_clip_float64(self):
+        """Test clip with float64 array."""
+        import arrayops
+
+        arr = array.array("d", [1.5, 5.5, 10.5, 15.5, 20.5])
+        arrayops.clip(arr, 5.0, 15.0)
+        assert all(
+            abs(a - b) < 1e-10 for a, b in zip(arr, [5.0, 5.5, 10.5, 15.0, 15.0])
+        )
+
+    def test_clip_invalid_range(self):
+        """Test clip with min > max raises ValueError."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3])
+        with pytest.raises(ValueError, match="min_val must be <= max_val"):
+            arrayops.clip(arr, 10.0, 5.0)
+
+    def test_clip_empty(self):
+        """Test clip with empty array (no error)."""
+        import arrayops
+
+        arr = array.array("i", [])
+        arrayops.clip(arr, 0.0, 100.0)
+        assert len(arr) == 0
+
+    def test_normalize_float64(self):
+        """Test normalize with float64 array."""
+        import arrayops
+
+        arr = array.array("d", [10.0, 20.0, 30.0, 40.0, 50.0])
+        arrayops.normalize(arr)
+        # After normalization: (x - 10) / (50 - 10) = (x - 10) / 40
+        expected = [0.0, 0.25, 0.5, 0.75, 1.0]
+        assert all(abs(a - b) < 1e-10 for a, b in zip(arr, expected))
+
+    def test_normalize_int32_error(self):
+        """Test normalize with int32 array raises ValueError."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3, 4, 5])
+        with pytest.raises(ValueError, match="float arrays"):
+            arrayops.normalize(arr)
+
+    def test_normalize_empty(self):
+        """Test normalize with empty array (no error)."""
+        import arrayops
+
+        arr = array.array("d", [])
+        arrayops.normalize(arr)
+        assert len(arr) == 0
+
+    @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
+    def test_add_numpy(self):
+        """Test add with NumPy arrays returns NumPy array."""
+        import arrayops
+
+        arr1 = np.array([1, 2, 3], dtype=np.int32)
+        arr2 = np.array([10, 20, 30], dtype=np.int32)
+        result = arrayops.add(arr1, arr2)
+        assert isinstance(result, np.ndarray)
+        np.testing.assert_array_equal(result, np.array([11, 22, 33], dtype=np.int32))
+
+    @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
+    def test_clip_numpy(self):
+        """Test clip with NumPy array."""
+        import arrayops
+
+        arr = np.array([1, 5, 10, 15, 20], dtype=np.int32)
+        arrayops.clip(arr, 5.0, 15.0)
+        np.testing.assert_array_equal(arr, np.array([5, 5, 10, 15, 15], dtype=np.int32))
+
+
+class TestArrayManipulation:
+    """Tests for array manipulation operations (reverse, sort, unique)."""
+
+    def test_reverse_int32(self):
+        """Test reverse with int32 array."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3, 4, 5])
+        arrayops.reverse(arr)
+        assert list(arr) == [5, 4, 3, 2, 1]
+
+    def test_reverse_float64(self):
+        """Test reverse with float64 array."""
+        import arrayops
+
+        arr = array.array("d", [1.5, 2.5, 3.5, 4.5])
+        arrayops.reverse(arr)
+        expected = [4.5, 3.5, 2.5, 1.5]
+        assert all(abs(a - b) < 1e-10 for a, b in zip(arr, expected))
+
+    def test_reverse_empty(self):
+        """Test reverse with empty array (no error)."""
+        import arrayops
+
+        arr = array.array("i", [])
+        arrayops.reverse(arr)
+        assert len(arr) == 0
+
+    def test_sort_int32(self):
+        """Test sort with int32 array."""
+        import arrayops
+
+        arr = array.array("i", [5, 2, 8, 1, 9])
+        arrayops.sort(arr)
+        assert list(arr) == [1, 2, 5, 8, 9]
+
+    def test_sort_float64(self):
+        """Test sort with float64 array."""
+        import arrayops
+
+        arr = array.array("d", [5.5, 2.2, 8.8, 1.1, 9.9])
+        arrayops.sort(arr)
+        expected = [1.1, 2.2, 5.5, 8.8, 9.9]
+        assert all(abs(a - b) < 1e-10 for a, b in zip(arr, expected))
+
+    def test_sort_already_sorted(self):
+        """Test sort with already sorted array."""
+        import arrayops
+
+        arr = array.array("i", [1, 2, 3, 4, 5])
+        arrayops.sort(arr)
+        assert list(arr) == [1, 2, 3, 4, 5]
+
+    def test_sort_empty(self):
+        """Test sort with empty array (no error)."""
+        import arrayops
+
+        arr = array.array("i", [])
+        arrayops.sort(arr)
+        assert len(arr) == 0
+
+    def test_unique_int32(self):
+        """Test unique with int32 array."""
+        import arrayops
+
+        arr = array.array("i", [5, 2, 8, 2, 1, 5, 9])
+        result = arrayops.unique(arr)
+        assert list(result) == [1, 2, 5, 8, 9]
+        assert isinstance(result, array.array)
+
+    def test_unique_float64(self):
+        """Test unique with float64 array."""
+        import arrayops
+
+        arr = array.array("d", [5.5, 2.2, 8.8, 2.2, 1.1, 5.5, 9.9])
+        result = arrayops.unique(arr)
+        expected = [1.1, 2.2, 5.5, 8.8, 9.9]
+        assert all(abs(a - b) < 1e-10 for a, b in zip(result, expected))
+
+    def test_unique_all_unique(self):
+        """Test unique with all unique values."""
+        import arrayops
+
+        arr = array.array("i", [5, 2, 8, 1, 9])
+        result = arrayops.unique(arr)
+        assert list(result) == [1, 2, 5, 8, 9]
+
+    def test_unique_all_same(self):
+        """Test unique with all same values."""
+        import arrayops
+
+        arr = array.array("i", [5, 5, 5, 5, 5])
+        result = arrayops.unique(arr)
+        assert list(result) == [5]
+
+    def test_unique_empty(self):
+        """Test unique with empty array."""
+        import arrayops
+
+        arr = array.array("i", [])
+        result = arrayops.unique(arr)
+        assert len(result) == 0
+        assert isinstance(result, array.array)
+
+    @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
+    def test_reverse_numpy(self):
+        """Test reverse with NumPy array."""
+        import arrayops
+
+        arr = np.array([1, 2, 3, 4, 5], dtype=np.int32)
+        arrayops.reverse(arr)
+        np.testing.assert_array_equal(arr, np.array([5, 4, 3, 2, 1], dtype=np.int32))
+
+    @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
+    def test_sort_numpy(self):
+        """Test sort with NumPy array."""
+        import arrayops
+
+        arr = np.array([5, 2, 8, 1, 9], dtype=np.int32)
+        arrayops.sort(arr)
+        np.testing.assert_array_equal(arr, np.array([1, 2, 5, 8, 9], dtype=np.int32))
+
+    @pytest.mark.skipif(not NUMPY_AVAILABLE, reason="NumPy not available")
+    def test_unique_numpy(self):
+        """Test unique with NumPy array returns NumPy array."""
+        import arrayops
+
+        arr = np.array([5, 2, 8, 2, 1, 5, 9], dtype=np.int32)
+        result = arrayops.unique(arr)
+        assert isinstance(result, np.ndarray)
+        np.testing.assert_array_equal(result, np.array([1, 2, 5, 8, 9], dtype=np.int32))

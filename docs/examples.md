@@ -325,25 +325,22 @@ def compute_stats(data):
     if len(data) == 0:
         return None
     
-    total = ao.sum(data)
-    mean = total / len(data)
-    
-    # Find min/max (using built-in for now)
-    min_val = min(data)
-    max_val = max(data)
-    
     return {
         'count': len(data),
-        'sum': total,
-        'mean': mean,
-        'min': min_val,
-        'max': max_val,
-        'range': max_val - min_val,
+        'sum': ao.sum(data),
+        'mean': ao.mean(data),
+        'min': ao.min(data),
+        'max': ao.max(data),
+        'std': ao.std(data),
+        'var': ao.var(data),
+        'median': ao.median(data),
     }
 
 data = array.array('f', [10.0, 20.0, 30.0, 40.0, 50.0])
 stats = compute_stats(data)
 print(stats)
+# {'count': 5, 'sum': 150.0, 'mean': 30.0, 'min': 10.0, 'max': 50.0,
+#  'std': 14.14..., 'var': 200.0, 'median': 30.0}
 ```
 
 ### Data Transformation Pipeline
@@ -355,14 +352,12 @@ import arrayops as ao
 def transform_pipeline(data):
     """Apply a series of transformations."""
     # Step 1: Center the data (subtract mean)
-    mean = ao.sum(data) / len(data)
+    mean_val = ao.mean(data)
     for i in range(len(data)):
-        data[i] -= mean
+        data[i] -= mean_val
     
-    # Step 2: Scale to unit variance (simplified)
-    # In practice, you'd compute variance first
-    variance_estimate = 1.0  # Placeholder
-    std_dev = variance_estimate ** 0.5
+    # Step 2: Scale to unit variance
+    std_dev = ao.std(data)
     if std_dev > 0:
         ao.scale(data, 1.0 / std_dev)
     
@@ -464,14 +459,14 @@ valid = ao.filter(sensor_data, lambda x: 0.0 <= x <= 40.0)
 print(f"Valid readings: {list(valid)}")  # [10.5, 20.3, 15.8, 30.2, 25.1, 5.2, 35.0]
 
 # Step 2: Transform (normalize to 0-1)
-max_val = ao.reduce(valid, lambda acc, x: acc if acc > x else x)
-normalized = ao.map(valid, lambda x: x / max_val)
+# Create a copy for normalization (since normalize modifies in-place)
+normalized = array.array('f', list(valid))
+ao.normalize(normalized)
 print(f"Normalized: {list(normalized)}")  # Values scaled to 0-1 range
 
 # Step 3: Compute statistics
-total = ao.reduce(normalized, lambda acc, x: acc + x)
-mean = total / len(normalized)
-print(f"Mean normalized value: {mean:.3f}")
+mean_val = ao.mean(normalized)
+print(f"Mean normalized value: {mean_val:.3f}")
 ```
 
 ### Map-Filter-Reduce Pattern
@@ -496,15 +491,349 @@ total_large = ao.reduce(large, lambda acc, x: acc + x)
 print(total_large)  # 900
 ```
 
+## Statistical Operations
+
+### Basic Statistics
+
+```python
+import array
+import arrayops as ao
+
+data = array.array('i', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+
+# Basic statistics
+print(f"Mean: {ao.mean(data)}")          # 5.5
+print(f"Min: {ao.min(data)}")            # 1
+print(f"Max: {ao.max(data)}")            # 10
+print(f"Std dev: {ao.std(data):.2f}")    # 2.87
+print(f"Variance: {ao.var(data):.2f}")   # 8.25
+print(f"Median: {ao.median(data)}")      # 5
+```
+
+### Data Analysis
+
+```python
+import array
+import arrayops as ao
+
+# Analyze temperature readings
+temperatures = array.array('f', [20.5, 22.1, 19.8, 21.3, 23.0, 20.2, 21.7])
+
+stats = {
+    'mean': ao.mean(temperatures),
+    'min': ao.min(temperatures),
+    'max': ao.max(temperatures),
+    'std': ao.std(temperatures),
+    'median': ao.median(temperatures),
+}
+
+print(f"Temperature stats: {stats}")
+# Temperature stats: {'mean': 21.23..., 'min': 19.8, 'max': 23.0,
+#                     'std': 1.03..., 'median': 21.3}
+```
+
+---
+
+## Element-wise Operations
+
+### Array Addition
+
+```python
+import array
+import arrayops as ao
+
+# Add two arrays element-wise
+arr1 = array.array('i', [1, 2, 3, 4, 5])
+arr2 = array.array('i', [10, 20, 30, 40, 50])
+result = ao.add(arr1, arr2)
+print(list(result))  # [11, 22, 33, 44, 55]
+
+# Vector addition for coordinates
+x_coords = array.array('f', [1.0, 2.0, 3.0])
+y_coords = array.array('f', [4.0, 5.0, 6.0])
+translated = ao.add(x_coords, y_coords)
+print(list(translated))  # [5.0, 7.0, 9.0]
+```
+
+### Array Multiplication
+
+```python
+import array
+import arrayops as ao
+
+# Element-wise multiplication
+arr1 = array.array('i', [1, 2, 3, 4, 5])
+arr2 = array.array('i', [2, 3, 4, 5, 6])
+result = ao.multiply(arr1, arr2)
+print(list(result))  # [2, 6, 12, 20, 30]
+
+# Apply scaling factors
+values = array.array('f', [10.0, 20.0, 30.0])
+scales = array.array('f', [0.5, 1.5, 2.0])
+scaled = ao.multiply(values, scales)
+print(list(scaled))  # [5.0, 30.0, 60.0]
+```
+
+### Clipping Values
+
+```python
+import array
+import arrayops as ao
+
+# Clip values to valid range
+data = array.array('i', [1, 5, 10, 15, 20, 25])
+ao.clip(data, 5.0, 15.0)
+print(list(data))  # [5, 5, 10, 15, 15, 15]
+
+# Ensure sensor readings are in valid range
+readings = array.array('f', [-5.0, 10.0, 25.0, 35.0, 50.0])
+ao.clip(readings, 0.0, 40.0)
+print(list(readings))  # [0.0, 10.0, 25.0, 35.0, 40.0]
+```
+
+### Normalization
+
+```python
+import array
+import arrayops as ao
+
+# Normalize data to [0, 1] range
+data = array.array('f', [10.0, 20.0, 30.0, 40.0, 50.0])
+ao.normalize(data)
+print(list(data))  # [0.0, 0.25, 0.5, 0.75, 1.0]
+
+# Normalize feature vectors for machine learning
+features = array.array('f', [100.0, 200.0, 300.0, 400.0])
+ao.normalize(features)
+print(list(features))  # [0.0, 0.333..., 0.666..., 1.0]
+```
+
+---
+
+## Array Manipulation
+
+### Reversing Arrays
+
+```python
+import array
+import arrayops as ao
+
+# Reverse array in-place
+arr = array.array('i', [1, 2, 3, 4, 5])
+ao.reverse(arr)
+print(list(arr))  # [5, 4, 3, 2, 1]
+
+# Reverse time series data
+timeline = array.array('f', [1.0, 2.0, 3.0, 4.0, 5.0])
+ao.reverse(timeline)
+print(list(timeline))  # [5.0, 4.0, 3.0, 2.0, 1.0]
+```
+
+### Sorting Arrays
+
+```python
+import array
+import arrayops as ao
+
+# Sort array in-place
+arr = array.array('i', [5, 2, 8, 1, 9, 3])
+ao.sort(arr)
+print(list(arr))  # [1, 2, 3, 5, 8, 9]
+
+# Sort floating point data
+values = array.array('f', [3.5, 1.2, 7.8, 0.5, 4.9])
+ao.sort(values)
+print(list(values))  # [0.5, 1.2, 3.5, 4.9, 7.8]
+```
+
+### Finding Unique Values
+
+```python
+import array
+import arrayops as ao
+
+# Get unique elements (sorted)
+arr = array.array('i', [5, 2, 8, 2, 1, 5, 9, 1])
+unique_vals = ao.unique(arr)
+print(list(unique_vals))  # [1, 2, 5, 8, 9]
+
+# Remove duplicates from category IDs
+categories = array.array('i', [1, 2, 2, 3, 1, 3, 4, 2])
+unique_categories = ao.unique(categories)
+print(list(unique_categories))  # [1, 2, 3, 4]
+```
+
+### Combining Operations
+
+```python
+import array
+import arrayops as ao
+
+# Data cleaning pipeline
+data = array.array('f', [10.0, 25.0, 15.0, 30.0, 20.0, 35.0, 5.0])
+
+# Step 1: Sort data
+ao.sort(data)
+
+# Step 2: Clip outliers
+ao.clip(data, 10.0, 30.0)
+
+# Step 3: Normalize
+ao.normalize(data)
+
+# Step 4: Get unique normalized values
+unique_normalized = ao.unique(data)
+print(list(unique_normalized))
+```
+
+---
+
+## Zero-Copy Slicing
+
+### Basic Slicing
+
+```python
+import array
+import arrayops as ao
+
+# Create array and slice it
+arr = array.array('i', [10, 20, 30, 40, 50, 60])
+view = ao.slice(arr, 1, 4)
+print(list(view))  # [20, 30, 40]
+print(type(view))  # <class 'memoryview'>
+
+# Slice with defaults
+start_slice = ao.slice(arr, None, 3)  # [10, 20, 30]
+end_slice = ao.slice(arr, 3, None)    # [40, 50, 60]
+full_slice = ao.slice(arr, None, None)  # [10, 20, 30, 40, 50, 60]
+```
+
+### Zero-Copy Behavior
+
+```python
+import array
+import arrayops as ao
+
+# Create array and view
+arr = array.array('i', [1, 2, 3, 4, 5])
+view = ao.slice(arr, 1, 4)  # View: [2, 3, 4]
+
+# Modify original array
+arr[2] = 99
+
+# View reflects the change (zero-copy)
+print(list(view))  # [2, 99, 4]
+```
+
+### Processing Chunks
+
+```python
+import array
+import arrayops as ao
+
+# Process array in chunks without copying
+data = array.array('f', range(100))
+chunk_size = 20
+
+for i in range(0, len(data), chunk_size):
+    chunk = ao.slice(data, i, i + chunk_size)
+    # Process chunk (zero-copy view)
+    avg = ao.mean(chunk)  # Can use arrayops functions directly on memoryview
+    print(f"Chunk {i//chunk_size} average: {avg}")
+```
+
+---
+
+## Lazy Evaluation
+
+### Basic Lazy Operations
+
+```python
+import array
+import arrayops as ao
+
+arr = array.array('i', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+
+# Create lazy array and chain operations
+lazy = ao.lazy_array(arr)
+result = lazy.map(lambda x: x * 2).filter(lambda x: x > 10).collect()
+print(list(result))  # [12, 14, 16, 18, 20]
+```
+
+### Chaining Multiple Operations
+
+```python
+import array
+import arrayops as ao
+
+# Chain map and filter operations efficiently
+data = array.array('i', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+
+lazy = ao.lazy_array(data)
+# Multiple maps
+result = lazy.map(lambda x: x * 2).map(lambda x: x + 1).collect()
+print(list(result))  # [3, 5, 7, 9, 11, 13, 15, 17, 19, 21]
+
+# Multiple filters
+lazy = ao.lazy_array(data)
+result = lazy.filter(lambda x: x > 3).filter(lambda x: x < 8).collect()
+print(list(result))  # [4, 5, 6, 7]
+```
+
+### Memory Efficiency
+
+```python
+import array
+import arrayops as ao
+
+# Without lazy evaluation: creates intermediate arrays
+data = array.array('i', range(100000))
+doubled = ao.map(data, lambda x: x * 2)
+filtered = ao.filter(doubled, lambda x: x > 1000)
+result = ao.sum(filtered)  # Multiple intermediate arrays allocated
+
+# With lazy evaluation: single allocation
+data = array.array('i', range(100000))
+lazy = ao.lazy_array(data)
+filtered = lazy.map(lambda x: x * 2).filter(lambda x: x > 1000).collect()
+result = ao.sum(filtered)  # Only one intermediate array allocated
+```
+
+### Checking Chain Length
+
+```python
+import array
+import arrayops as ao
+
+arr = array.array('i', [1, 2, 3, 4, 5])
+lazy = ao.lazy_array(arr)
+
+lazy = lazy.map(lambda x: x * 2)
+print(lazy.len())  # 1
+
+lazy = lazy.filter(lambda x: x > 5)
+print(lazy.len())  # 2
+
+lazy = lazy.map(lambda x: x + 1)
+print(lazy.len())  # 3
+```
+
+---
+
 ## Best Practices
 
 1. **Use appropriate types**: Choose the smallest numeric type that fits your data to save memory
-2. **Prefer in-place operations**: Use `map_inplace()` and `scale()` which modify arrays in-place when possible
-3. **Handle empty arrays**: Always check for empty arrays before operations if needed
+2. **Prefer in-place operations**: Use `map_inplace()`, `scale()`, `clip()`, `normalize()`, `reverse()`, and `sort()` which modify arrays in-place when possible
+3. **Handle empty arrays**: Always check for empty arrays before operations if needed (statistical operations raise errors on empty arrays)
 4. **Batch processing**: Process large datasets in chunks to manage memory
 5. **Type consistency**: Keep arrays of the same type throughout your pipeline
 6. **Use map_inplace for memory efficiency**: When you don't need the original array, use `map_inplace()` instead of `map()`
-7. **Combine operations**: Chain map, filter, and reduce operations for complex data processing pipelines
+7. **Combine operations**: Chain map, filter, reduce, and array manipulation operations for complex data processing pipelines
+8. **Use statistical functions**: Prefer `ao.mean()`, `ao.min()`, `ao.max()`, etc. over computing manually for better performance
+9. **Normalize before ML**: Use `ao.normalize()` to scale features to [0, 1] range before machine learning operations
+10. **Unique for deduplication**: Use `ao.unique()` to efficiently remove duplicates and get sorted unique values
+11. **Use zero-copy slicing**: Use `ao.slice()` for views of array portions without copying data
+12. **Lazy evaluation for chains**: Use `ao.lazy_array()` to chain multiple `map()` and `filter()` operations efficiently, avoiding intermediate allocations
 
 ## Related Documentation
 

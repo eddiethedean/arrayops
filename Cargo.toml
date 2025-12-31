@@ -1,6 +1,6 @@
 [package]
 name = "arrayops"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -8,14 +8,26 @@ edition = "2021"
 name = "arrayops"
 crate-type = ["cdylib"]
 
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+
 [dependencies]
 pyo3 = { version = "0.20", features = ["extension-module"] }
 
 [features]
 default = []
 parallel = ["dep:rayon"]
-simd = []
+simd = []  # SIMD via compiler auto-vectorization and std::arch intrinsics
+nightly-simd = []  # Use std::simd when on nightly
 
 [dependencies.rayon]
 version = "1.8"
 optional = true
+
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+

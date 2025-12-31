@@ -69,34 +69,47 @@ _No items currently in progress_
   - Use case: Binary data processing, network protocols
   - In-place operations require writable memoryviews
 
-### Phase 4: Advanced Features (Low Priority)
+### Phase 4: Advanced Features
+- [x] **Statistical Operations** - Statistical analysis functions
+  - [x] **`mean(arr) -> float`** - Arithmetic mean
+  - [x] **`min(arr) -> scalar`** - Minimum value
+  - [x] **`max(arr) -> scalar`** - Maximum value
+  - [x] **`std(arr) -> float`** - Standard deviation (population)
+  - [x] **`var(arr) -> float`** - Variance (population)
+  - [x] **`median(arr) -> scalar`** - Median value
+- [x] **Element-wise Operations** - Binary array operations
+  - [x] **`add(arr1, arr2) -> array`** - Element-wise addition
+  - [x] **`multiply(arr1, arr2) -> array`** - Element-wise multiplication
+  - [x] **`clip(arr, min, max) -> None`** - In-place clipping to range
+  - [x] **`normalize(arr) -> None`** - In-place normalization to [0, 1]
+- [x] **Array Manipulation** - Array transformation operations
+  - [x] **`reverse(arr) -> None`** - In-place reversal
+  - [x] **`sort(arr) -> None`** - In-place sorting (for numeric types)
+  - [x] **`unique(arr) -> array`** - Return unique elements (sorted)
 
-#### Statistical Operations
-- [ ] **`mean(arr) -> float`** - Arithmetic mean
-- [ ] **`min(arr) -> scalar`** - Minimum value
-- [ ] **`max(arr) -> scalar`** - Maximum value
-- [ ] **`std(arr) -> float`** - Standard deviation
-- [ ] **`var(arr) -> float`** - Variance
-- [ ] **`median(arr) -> scalar`** - Median value
-
-#### Element-wise Operations
-- [ ] **`add(arr1, arr2) -> array`** - Element-wise addition
-- [ ] **`multiply(arr1, arr2) -> array`** - Element-wise multiplication
-- [ ] **`clip(arr, min, max) -> None`** - In-place clipping to range
-- [ ] **`normalize(arr) -> None`** - In-place normalization to [0, 1]
-
-#### Array Manipulation
-- [ ] **`reverse(arr) -> None`** - In-place reversal
-- [ ] **`sort(arr) -> None`** - In-place sorting (for numeric types)
-- [ ] **`unique(arr) -> array`** - Return unique elements (sorted)
+### Advanced Features (Post-Phase 4)
+- [x] **Zero-copy slicing** - `slice(arr, start=None, end=None) -> memoryview`
+  - Returns zero-copy memoryview of array slice
+  - Works with all supported input types (array.array, numpy.ndarray, memoryview, Arrow)
+  - No data copying - view shares memory with original array
+- [x] **Lazy evaluation** - `lazy_array(arr) -> LazyArray`
+  - Chain operations without intermediate allocations
+  - Supports `map()` and `filter()` operations
+  - Execution deferred until `collect()` is called
+  - More memory-efficient for complex operation chains
+- [x] **Arrow buffer interop** - Support for Apache Arrow buffers/arrays
+  - Automatic detection of `pyarrow.Buffer`, `pyarrow.Array`, and `pyarrow.ChunkedArray`
+  - All operations work transparently with Arrow arrays
+  - Returns Arrow arrays when Arrow input is used
+  - Optional dependency (requires `pyarrow` to be installed)
 
 ## 🔬 Research & Exploration
 
 ### Potential Enhancements
-- [ ] **Arrow buffer interop** - Support Apache Arrow memory format
-- [ ] **Zero-copy slicing** - Return views instead of copies where possible
-- [ ] **Lazy evaluation** - Chain operations without intermediate allocations
-- [ ] **Custom allocators** - Support for specialized memory pools
+- [x] **Arrow buffer interop** - Support Apache Arrow memory format ✅
+- [x] **Zero-copy slicing** - Return views instead of copies where possible ✅
+- [x] **Lazy evaluation** - Chain operations without intermediate allocations ✅
+- [ ] **Custom allocators** - Support for specialized memory pools (infrastructure in place)
 - [ ] **GPU acceleration** - Optional CUDA/OpenCL support for very large arrays
 
 ### API Design Considerations
@@ -134,12 +147,15 @@ _No items currently in progress_
 
 ### Q3 2024
 - [x] Complete NumPy and memoryview support (completed in Q1 2024)
-- [ ] Statistical operations
-- [ ] Performance benchmarking suite
+- [x] Statistical operations (completed in Q4 2024)
+- [x] Performance benchmarking suite (completed)
 
 ### Q4 2024
-- [ ] Advanced features (element-wise ops, array manipulation)
-- [ ] API polish and documentation
+- [x] Advanced features (element-wise ops, array manipulation) (completed)
+- [x] API polish and documentation (completed)
+- [x] Arrow buffer interop (completed)
+- [x] Zero-copy slicing (completed)
+- [x] Lazy evaluation (completed)
 - [ ] Version 1.0 release candidate
 
 ### Q1 2025
@@ -147,22 +163,15 @@ _No items currently in progress_
 - [ ] Post-release bug fixes and stability improvements
 - [ ] Performance profiling and optimization pass
 - [ ] Community feedback integration
-- [ ] Begin Arrow buffer interop research
-- [ ] Zero-copy slicing implementation
 - [ ] Enhanced error messages and diagnostics
 
 ### Q2 2025
-- [ ] **Arrow buffer interop** - Support Apache Arrow memory format
 - [ ] Iterator protocol optimization for efficient Python iteration
 - [ ] Method chaining API design and prototype
 - [ ] Advanced SIMD optimizations (platform-specific tuning)
 - [ ] Performance regression testing infrastructure
-- [ ] Documentation site and tutorials
 - [ ] Community benchmarks and case studies
-
-### Q3 2025
-- [ ] **Lazy evaluation system** - Chain operations without intermediate allocations
-- [ ] Custom allocator support for specialized memory pools
+- [ ] Custom allocator support for specialized memory pools (infrastructure in place)
 - [ ] Async/await support for I/O-bound operations
 - [ ] Context managers for parallel operation resource management
 - [ ] Extended statistical operations (percentiles, quantiles)
@@ -203,5 +212,5 @@ Priority will be given to:
 
 ---
 
-_Last updated: Phase 3 completed (NumPy array interop and memoryview support)_
+_Last updated: Phase 4 completed + Advanced features (Arrow interop, Zero-copy slicing, Lazy evaluation)_
 
