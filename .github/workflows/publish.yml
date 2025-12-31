@@ -130,10 +130,13 @@ jobs:
 
       - name: Build Linux wheels (manylinux)
         if: matrix.build-platform == 'linux'
+        env:
+          PYO3_USE_ABI3_FORWARD_COMPATIBILITY: ${{ matrix.python-version == '3.13' && '1' || '' }}
         run: |
           docker run --rm -v "$PWD":/io \
             -w /io \
             -e PYO3_PYTHON=/opt/python/${{ matrix.python-tag }}-${{ matrix.python-tag }}/bin/python \
+            -e PYO3_USE_ABI3_FORWARD_COMPATIBILITY=${{ env.PYO3_USE_ABI3_FORWARD_COMPATIBILITY }} \
             ghcr.io/pyo3/maturin:latest build \
             --release --out /io/dist \
             --interpreter /opt/python/${{ matrix.python-tag }}-${{ matrix.python-tag }}/bin/python \
@@ -141,12 +144,16 @@ jobs:
 
       - name: Build macOS wheels
         if: startsWith(matrix.build-platform, 'macos-')
+        env:
+          PYO3_USE_ABI3_FORWARD_COMPATIBILITY: ${{ matrix.python-version == '3.13' && '1' || '' }}
         run: |
           pip install maturin
           maturin build --release --out dist --interpreter python
 
       - name: Build Windows wheels
         if: matrix.build-platform == 'windows'
+        env:
+          PYO3_USE_ABI3_FORWARD_COMPATIBILITY: ${{ matrix.python-version == '3.13' && '1' || '' }}
         run: |
           pip install maturin
           maturin build --release --out dist --interpreter python
