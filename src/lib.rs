@@ -356,6 +356,11 @@ fn map_inplace(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<()> {
     let typecode = get_typecode(array)?;
     let callable = r#fn.as_ref(py);
     
+    // Handle empty arrays early to avoid buffer alignment issues on macOS
+    if get_array_len(array)? == 0 {
+        return Ok(());
+    }
+    
     match typecode {
         TypeCode::Int8 => {
             let mut buffer = PyBuffer::<i8>::get(array)?;
