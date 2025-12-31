@@ -562,7 +562,7 @@ Enable optional features via Cargo features:
 
 ```toml
 [dependencies]
-arrayops = { version = "0.1.4", features = ["parallel", "simd"] }
+arrayops = { version = "0.2.0", features = ["parallel", "simd"] }
 ```
 
 - `parallel`: Enable parallel execution with rayon for large arrays (10,000+ elements)
