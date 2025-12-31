@@ -35,8 +35,16 @@ jobs:
     - name: Install pytest
       run: pip install pytest
 
-    - name: Build and install package
-      run: maturin develop --release
+    - name: Build package
+      run: |
+        if [ "${{ runner.os }}" == "Linux" ]; then
+          maturin build --release --skip-auditwheel
+        else
+          maturin build --release
+        fi
+
+    - name: Install package
+      run: pip install target/wheels/arrayops-*.whl --force-reinstall
 
     - name: Run Python tests
       run: pytest tests/
