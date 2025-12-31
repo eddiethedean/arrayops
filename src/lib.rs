@@ -85,9 +85,7 @@ fn sum_impl<T>(py: Python, buffer: &PyBuffer<T>) -> PyResult<T>
 where
     T: Element + Copy + Default + std::ops::Add<Output = T> + pyo3::ToPyObject,
 {
-    let slice = unsafe { 
-        buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?
-    };
+    let slice = buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
     
     // TODO: Parallel sum optimization with rayon
     // Note: ReadOnlyCell<T> prevents direct parallel access. Future enhancement:
@@ -108,9 +106,7 @@ where
     T: Element + Copy + std::ops::Mul<F, Output = T>,
     F: Copy,
 {
-    let slice = unsafe { 
-        buffer.as_mut_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get mutable buffer slice"))?
-    };
+    let slice = buffer.as_mut_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get mutable buffer slice"))?;
     for item in slice.iter() {
         item.set(item.get() * factor);
     }
@@ -232,9 +228,7 @@ fn map_impl<T>(py: Python, buffer: &PyBuffer<T>, callable: &PyAny, typecode: Typ
 where
     T: Element + Copy + pyo3::ToPyObject,
 {
-    let slice = unsafe { 
-        buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?
-    };
+    let slice = buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
     
     let array_module = PyModule::import(py, "array")?;
     let array_type = array_module.getattr("array")?;
@@ -307,9 +301,7 @@ fn map_inplace_impl<T>(py: Python, buffer: &mut PyBuffer<T>, callable: &PyAny) -
 where
     T: Element + Copy + pyo3::ToPyObject + for<'a> pyo3::FromPyObject<'a>,
 {
-    let slice = unsafe { 
-        buffer.as_mut_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get mutable buffer slice"))?
-    };
+    let slice = buffer.as_mut_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get mutable buffer slice"))?;
     
     for item in slice.iter() {
         let value = item.get();
@@ -378,9 +370,7 @@ fn filter_impl<T>(py: Python, buffer: &PyBuffer<T>, predicate: &PyAny, typecode:
 where
     T: Element + Copy + pyo3::ToPyObject,
 {
-    let slice = unsafe { 
-        buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?
-    };
+    let slice = buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
     
     let array_module = PyModule::import(py, "array")?;
     let array_type = array_module.getattr("array")?;
@@ -456,9 +446,7 @@ fn reduce_impl<T>(py: Python, buffer: &PyBuffer<T>, r#fn: &PyAny, initial: Optio
 where
     T: Element + Copy + pyo3::ToPyObject,
 {
-    let slice = unsafe { 
-        buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?
-    };
+    let slice = buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
     
     if slice.len() == 0 {
         return match initial {
