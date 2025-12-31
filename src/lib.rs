@@ -666,7 +666,7 @@ mod tests {
                 .unwrap();
             scale(py, arr, 2.0).unwrap();
             let buffer = PyBuffer::<i32>::get(arr).unwrap();
-            let slice = unsafe { buffer.as_slice(py).unwrap() };
+            let slice = buffer.as_slice(py).unwrap();
             let values: Vec<i32> = slice.iter().map(|cell| cell.get()).collect();
             assert_eq!(values, vec![2, 4, 6, 8, 10]);
         });
@@ -682,7 +682,7 @@ mod tests {
                 .unwrap();
             scale(py, arr, 2.5).unwrap();
             let buffer = PyBuffer::<f64>::get(arr).unwrap();
-            let slice = unsafe { buffer.as_slice(py).unwrap() };
+            let slice = buffer.as_slice(py).unwrap();
             let values: Vec<f64> = slice.iter().map(|cell| cell.get()).collect();
             assert_eq!(values, vec![2.5, 5.0, 7.5]);
         });
