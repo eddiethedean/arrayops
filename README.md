@@ -378,7 +378,7 @@ ao.scale(empty, 5.0)    # No error, array remains empty
 
 `arrayops` provides significant speedups over pure Python operations:
 
-| Operation | Python | ao | Speedup |
+| Operation | Python | arrayops | Speedup |
 |-----------|--------|----------|---------|
 | Sum (1M ints) | ~50ms | ~0.5ms | 100x |
 | Scale (1M ints) | ~80ms | ~1.5ms | 50x |
@@ -444,7 +444,7 @@ SIMD (Single Instruction, Multiple Data) optimizations are in development:
 
 ## 🔄 Comparison
 
-| Feature | `array.array` | `ao` | NumPy |
+| Feature | `array.array` | `arrayops` | NumPy |
 |---------|---------------|------------|-------|
 | Memory efficient | ✅ | ✅ | ❌ |
 | Fast operations | ❌ | ✅ | ✅ |
