@@ -21,13 +21,11 @@ jobs:
         run: |
           docker run --rm -v "$PWD":/io \
             -w /io \
-            quay.io/pypa/manylinux2014_x86_64:latest \
-            /bin/bash -c "
-            curl -L https://github.com/rust-lang/rustup/raw/master/rustup-init.sh | sh -s -- -y --default-toolchain stable
-            source \$HOME/.cargo/env
-            pip install maturin
-            maturin build --release --out /io/dist --compatibility manylinux2014
-            "
+            -e PYO3_PYTHON=/opt/python/cp312-cp312/bin/python \
+            ghcr.io/pyo3/maturin:latest build \
+            --release --out /io/dist \
+            --interpreter /opt/python/cp312-cp312/bin/python \
+            --compatibility manylinux2014
 
       - name: Publish to PyPI
         env:
