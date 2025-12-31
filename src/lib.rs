@@ -86,6 +86,12 @@ fn get_array_len(array: &PyAny) -> PyResult<usize> {
     Ok(len)
 }
 
+/// Get itemsize of an array.array
+fn get_itemsize(array: &PyAny) -> PyResult<usize> {
+    let itemsize: usize = array.getattr("itemsize")?.extract()?;
+    Ok(itemsize)
+}
+
 // Generic sum implementation
 fn sum_impl<T>(py: Python, buffer: &PyBuffer<T>) -> PyResult<T>
 where
@@ -138,11 +144,25 @@ fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
             TypeCode::Int8 => return Ok(0i8.to_object(py)),
             TypeCode::Int16 => return Ok(0i16.to_object(py)),
             TypeCode::Int32 => return Ok(0i32.to_object(py)),
-            TypeCode::Int64 => return Ok(0i64.to_object(py)),
+            TypeCode::Int64 => {
+                let itemsize = get_itemsize(array)?;
+                if itemsize == 4 {
+                    return Ok(0i32.to_object(py));
+                } else {
+                    return Ok(0i64.to_object(py));
+                }
+            }
             TypeCode::UInt8 => return Ok(0u8.to_object(py)),
             TypeCode::UInt16 => return Ok(0u16.to_object(py)),
             TypeCode::UInt32 => return Ok(0u32.to_object(py)),
-            TypeCode::UInt64 => return Ok(0u64.to_object(py)),
+            TypeCode::UInt64 => {
+                let itemsize = get_itemsize(array)?;
+                if itemsize == 4 {
+                    return Ok(0u32.to_object(py));
+                } else {
+                    return Ok(0u64.to_object(py));
+                }
+            }
             TypeCode::Float32 => return Ok(0.0f32.to_object(py)),
             TypeCode::Float64 => return Ok(0.0f64.to_object(py)),
         }
@@ -165,9 +185,16 @@ fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
             Ok(result.to_object(py))
         }
         TypeCode::Int64 => {
-            let buffer = PyBuffer::<i64>::get(array)?;
-            let result = sum_impl(py, &buffer)?;
-            Ok(result.to_object(py))
+            let itemsize = get_itemsize(array)?;
+            if itemsize == 4 {
+                let buffer = PyBuffer::<i32>::get(array)?;
+                let result = sum_impl(py, &buffer)?;
+                Ok(result.to_object(py))
+            } else {
+                let buffer = PyBuffer::<i64>::get(array)?;
+                let result = sum_impl(py, &buffer)?;
+                Ok(result.to_object(py))
+            }
         }
         TypeCode::UInt8 => {
             let buffer = PyBuffer::<u8>::get(array)?;
@@ -185,9 +212,16 @@ fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
             Ok(result.to_object(py))
         }
         TypeCode::UInt64 => {
-            let buffer = PyBuffer::<u64>::get(array)?;
-            let result = sum_impl(py, &buffer)?;
-            Ok(result.to_object(py))
+            let itemsize = get_itemsize(array)?;
+            if itemsize == 4 {
+                let buffer = PyBuffer::<u32>::get(array)?;
+                let result = sum_impl(py, &buffer)?;
+                Ok(result.to_object(py))
+            } else {
+                let buffer = PyBuffer::<u64>::get(array)?;
+                let result = sum_impl(py, &buffer)?;
+                Ok(result.to_object(py))
+            }
         }
         TypeCode::Float32 => {
             let buffer = PyBuffer::<f32>::get(array)?;
@@ -227,8 +261,14 @@ fn scale(py: Python, array: &PyAny, factor: f64) -> PyResult<()> {
             scale_impl(py, &mut buffer, factor as i32)
         }
         TypeCode::Int64 => {
-            let mut buffer = PyBuffer::<i64>::get(array)?;
-            scale_impl(py, &mut buffer, factor as i64)
+            let itemsize = get_itemsize(array)?;
+            if itemsize == 4 {
+                let mut buffer = PyBuffer::<i32>::get(array)?;
+                scale_impl(py, &mut buffer, factor as i32)
+            } else {
+                let mut buffer = PyBuffer::<i64>::get(array)?;
+                scale_impl(py, &mut buffer, factor as i64)
+            }
         }
         TypeCode::UInt8 => {
             let mut buffer = PyBuffer::<u8>::get(array)?;
@@ -243,8 +283,14 @@ fn scale(py: Python, array: &PyAny, factor: f64) -> PyResult<()> {
             scale_impl(py, &mut buffer, factor as u32)
         }
         TypeCode::UInt64 => {
-            let mut buffer = PyBuffer::<u64>::get(array)?;
-            scale_impl(py, &mut buffer, factor as u64)
+            let itemsize = get_itemsize(array)?;
+            if itemsize == 4 {
+                let mut buffer = PyBuffer::<u32>::get(array)?;
+                scale_impl(py, &mut buffer, factor as u32)
+            } else {
+                let mut buffer = PyBuffer::<u64>::get(array)?;
+                scale_impl(py, &mut buffer, factor as u64)
+            }
         }
         TypeCode::Float32 => {
             let mut buffer = PyBuffer::<f32>::get(array)?;
@@ -317,8 +363,14 @@ fn map(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<PyObject> {
             map_impl(py, &buffer, callable, typecode)
         }
         TypeCode::Int64 => {
-            let buffer = PyBuffer::<i64>::get(array)?;
-            map_impl(py, &buffer, callable, typecode)
+            let itemsize = get_itemsize(array)?;
+            if itemsize == 4 {
+                let buffer = PyBuffer::<i32>::get(array)?;
+                map_impl(py, &buffer, callable, typecode)
+            } else {
+                let buffer = PyBuffer::<i64>::get(array)?;
+                map_impl(py, &buffer, callable, typecode)
+            }
         }
         TypeCode::UInt8 => {
             let buffer = PyBuffer::<u8>::get(array)?;
@@ -333,8 +385,14 @@ fn map(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<PyObject> {
             map_impl(py, &buffer, callable, typecode)
         }
         TypeCode::UInt64 => {
-            let buffer = PyBuffer::<u64>::get(array)?;
-            map_impl(py, &buffer, callable, typecode)
+            let itemsize = get_itemsize(array)?;
+            if itemsize == 4 {
+                let buffer = PyBuffer::<u32>::get(array)?;
+                map_impl(py, &buffer, callable, typecode)
+            } else {
+                let buffer = PyBuffer::<u64>::get(array)?;
+                map_impl(py, &buffer, callable, typecode)
+            }
         }
         TypeCode::Float32 => {
             let buffer = PyBuffer::<f32>::get(array)?;
@@ -393,8 +451,14 @@ fn map_inplace(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<()> {
             map_inplace_impl(py, &mut buffer, callable)
         }
         TypeCode::Int64 => {
-            let mut buffer = PyBuffer::<i64>::get(array)?;
-            map_inplace_impl(py, &mut buffer, callable)
+            let itemsize = get_itemsize(array)?;
+            if itemsize == 4 {
+                let mut buffer = PyBuffer::<i32>::get(array)?;
+                map_inplace_impl(py, &mut buffer, callable)
+            } else {
+                let mut buffer = PyBuffer::<i64>::get(array)?;
+                map_inplace_impl(py, &mut buffer, callable)
+            }
         }
         TypeCode::UInt8 => {
             let mut buffer = PyBuffer::<u8>::get(array)?;
@@ -409,8 +473,14 @@ fn map_inplace(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<()> {
             map_inplace_impl(py, &mut buffer, callable)
         }
         TypeCode::UInt64 => {
-            let mut buffer = PyBuffer::<u64>::get(array)?;
-            map_inplace_impl(py, &mut buffer, callable)
+            let itemsize = get_itemsize(array)?;
+            if itemsize == 4 {
+                let mut buffer = PyBuffer::<u32>::get(array)?;
+                map_inplace_impl(py, &mut buffer, callable)
+            } else {
+                let mut buffer = PyBuffer::<u64>::get(array)?;
+                map_inplace_impl(py, &mut buffer, callable)
+            }
         }
         TypeCode::Float32 => {
             let mut buffer = PyBuffer::<f32>::get(array)?;
@@ -486,8 +556,14 @@ fn filter(py: Python, array: &PyAny, predicate: PyObject) -> PyResult<PyObject> 
             filter_impl(py, &buffer, callable, typecode)
         }
         TypeCode::Int64 => {
-            let buffer = PyBuffer::<i64>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode)
+            let itemsize = get_itemsize(array)?;
+            if itemsize == 4 {
+                let buffer = PyBuffer::<i32>::get(array)?;
+                filter_impl(py, &buffer, callable, typecode)
+            } else {
+                let buffer = PyBuffer::<i64>::get(array)?;
+                filter_impl(py, &buffer, callable, typecode)
+            }
         }
         TypeCode::UInt8 => {
             let buffer = PyBuffer::<u8>::get(array)?;
@@ -502,8 +578,14 @@ fn filter(py: Python, array: &PyAny, predicate: PyObject) -> PyResult<PyObject> 
             filter_impl(py, &buffer, callable, typecode)
         }
         TypeCode::UInt64 => {
-            let buffer = PyBuffer::<u64>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode)
+            let itemsize = get_itemsize(array)?;
+            if itemsize == 4 {
+                let buffer = PyBuffer::<u32>::get(array)?;
+                filter_impl(py, &buffer, callable, typecode)
+            } else {
+                let buffer = PyBuffer::<u64>::get(array)?;
+                filter_impl(py, &buffer, callable, typecode)
+            }
         }
         TypeCode::Float32 => {
             let buffer = PyBuffer::<f32>::get(array)?;
@@ -595,8 +677,14 @@ fn reduce(
             reduce_impl(py, &buffer, callable, initial)
         }
         TypeCode::Int64 => {
-            let buffer = PyBuffer::<i64>::get(array)?;
-            reduce_impl(py, &buffer, callable, initial)
+            let itemsize = get_itemsize(array)?;
+            if itemsize == 4 {
+                let buffer = PyBuffer::<i32>::get(array)?;
+                reduce_impl(py, &buffer, callable, initial)
+            } else {
+                let buffer = PyBuffer::<i64>::get(array)?;
+                reduce_impl(py, &buffer, callable, initial)
+            }
         }
         TypeCode::UInt8 => {
             let buffer = PyBuffer::<u8>::get(array)?;
@@ -611,8 +699,14 @@ fn reduce(
             reduce_impl(py, &buffer, callable, initial)
         }
         TypeCode::UInt64 => {
-            let buffer = PyBuffer::<u64>::get(array)?;
-            reduce_impl(py, &buffer, callable, initial)
+            let itemsize = get_itemsize(array)?;
+            if itemsize == 4 {
+                let buffer = PyBuffer::<u32>::get(array)?;
+                reduce_impl(py, &buffer, callable, initial)
+            } else {
+                let buffer = PyBuffer::<u64>::get(array)?;
+                reduce_impl(py, &buffer, callable, initial)
+            }
         }
         TypeCode::Float32 => {
             let buffer = PyBuffer::<f32>::get(array)?;
