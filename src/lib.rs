@@ -187,10 +187,10 @@ where
         if should_parallelize(len, PARALLEL_THRESHOLD_SCALE) {
             // Extract data to Vec for parallel processing
             let mut data: Vec<T> = slice.iter().map(|cell| cell.get()).collect();
-            
+
             // Process in parallel
             data.par_iter_mut().for_each(|x| *x = *x * factor);
-            
+
             // Write back to buffer
             for (item, &val) in slice.iter().zip(data.iter()) {
                 item.set(val);
