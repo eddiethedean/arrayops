@@ -17,25 +17,17 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
-      - name: Install maturin
-        run: |
-          python -m pip install --upgrade pip
-          pip install maturin
-
       - name: Build package with maturin (manylinux)
         run: |
           docker run --rm -v "$PWD":/io \
-            -e PYO3_PYTHON=/opt/python/cp312-cp312/bin/python \
-            ghcr.io/pyo3/maturin:latest build \
-            --release --out /io/dist \
-            --interpreter /opt/python/cp312-cp312/bin/python \
-            --compatibility manylinux2014
+            -w /io \
+            quay.io/pypa/manylinux2014_x86_64:latest \
+            /bin/bash -c "
+            curl -L https://github.com/rust-lang/rustup/raw/master/rustup-init.sh | sh -s -- -y --default-toolchain stable
+            source \$HOME/.cargo/env
+            pip install maturin
+            maturin build --release --out /io/dist --compatibility manylinux2014
+            "
 
       - name: Publish to PyPI
         env:
