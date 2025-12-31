@@ -50,6 +50,43 @@ jobs:
     - name: Run Python tests
       run: pytest tests/
 
+  test-features:
+    name: Test with features ${{ matrix.features }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        features: ['parallel', 'simd', 'parallel,simd']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Install maturin
+      run: pip install maturin
+
+    - name: Install pytest
+      run: pip install pytest
+
+    - name: Build package with features
+      run: maturin build --release --features ${{ matrix.features }} --skip-auditwheel
+
+    - name: Install package
+      shell: bash
+      run: pip install target/wheels/arrayops-*.whl --force-reinstall
+
+    - name: Run Python tests
+      run: pytest tests/
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -63,7 +100,16 @@ jobs:
         components: clippy, rustfmt
         override: true
 
-    - name: Run clippy
+    - name: Run clippy (default features)
+      run: cargo clippy -- -D warnings
+
+    - name: Run clippy (parallel feature)
+      run: cargo clippy --features parallel -- -D warnings
+
+    - name: Run clippy (simd feature)
+      run: cargo clippy --features simd -- -D warnings
+
+    - name: Run clippy (all features)
       run: cargo clippy --all-features -- -D warnings
 
     - name: Check formatting

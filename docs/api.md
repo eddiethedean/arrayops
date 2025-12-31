@@ -44,6 +44,8 @@ Compute the sum of all elements in an array.
 - Empty arrays return `0` (integer) or `0.0` (float)
 - Integer overflow follows Python's semantics (promotion to larger types)
 - Performance: ~100x faster than Python's built-in `sum()` for large arrays
+- Parallel execution: When built with `--features parallel`, arrays with 10,000+ elements automatically use parallel processing for additional speedup on multi-core systems
+- SIMD optimization: Infrastructure available via `--features simd` (full implementation pending)
 
 **Example:**
 ```python
@@ -94,6 +96,8 @@ Scale all elements of an array in-place by a factor.
 - For integer arrays, the factor is cast to the array's integer type
 - Empty arrays are handled gracefully (no error, array remains empty)
 - Performance: ~50x faster than Python loops for large arrays
+- Parallel execution: When built with `--features parallel`, arrays with 5,000+ elements automatically use parallel processing for additional speedup on multi-core systems
+- SIMD optimization: Infrastructure available via `--features simd` (full implementation pending)
 
 **Example:**
 ```python

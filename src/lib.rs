@@ -3,6 +3,13 @@ use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
+
+// Note: Full SIMD support requires nightly Rust with portable_simd feature
+// For now, SIMD optimizations are stubbed with scalar fallback
+// Full implementation will be added when std::simd API stabilizes further
+
 /// Supported array.array typecodes
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum TypeCode {
@@ -92,23 +99,57 @@ fn get_itemsize(array: &PyAny) -> PyResult<usize> {
     Ok(itemsize)
 }
 
-// Generic sum implementation
-fn sum_impl<T>(py: Python, buffer: &PyBuffer<T>) -> PyResult<T>
+// Parallel execution thresholds
+const PARALLEL_THRESHOLD_SUM: usize = 10_000;
+const PARALLEL_THRESHOLD_SCALE: usize = 5_000;
+const PARALLEL_THRESHOLD_MAP: usize = 10_000;
+const PARALLEL_THRESHOLD_FILTER: usize = 10_000;
+const PARALLEL_THRESHOLD_REDUCE: usize = 10_000;
+
+/// Extract buffer data to Vec for parallel processing
+#[cfg(feature = "parallel")]
+fn extract_buffer_to_vec<T>(py: Python, buffer: &PyBuffer<T>) -> PyResult<Vec<T>>
 where
-    T: Element + Copy + Default + std::ops::Add<Output = T> + pyo3::ToPyObject,
+    T: Element + Copy,
 {
     let slice = buffer
         .as_slice(py)
         .ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
+    Ok(slice.iter().map(|cell| cell.get()).collect())
+}
 
-    // TODO: Parallel sum optimization with rayon
-    // Note: ReadOnlyCell<T> prevents direct parallel access. Future enhancement:
-    // could extract chunks to Vec first, or use unsafe raw pointer access
+/// Check if array should be parallelized based on length and threshold
+#[cfg(feature = "parallel")]
+fn should_parallelize(len: usize, threshold: usize) -> bool {
+    len >= threshold
+}
+
+// SIMD thresholds - minimum array size to use SIMD
+#[cfg(feature = "simd")]
+const SIMD_THRESHOLD: usize = 32;
+
+// SIMD optimization infrastructure
+// Note: Full SIMD implementation requires std::simd API which is still evolving
+// For now, SIMD feature flag is available but uses optimized scalar code
+// This provides the structure for future SIMD implementation
+// TODO: Implement full SIMD when std::simd API stabilizes or use portable-simd crate
+
+// Generic sum implementation
+fn sum_impl<T>(py: Python, buffer: &PyBuffer<T>, len: usize) -> PyResult<T>
+where
+    T: Element + Copy + Default + std::ops::Add<Output = T> + pyo3::ToPyObject + Send + Sync,
+{
     #[cfg(feature = "parallel")]
     {
-        // Parallel optimization disabled until proper thread-safe access pattern is implemented
-        // See: https://github.com/PyO3/pyo3/issues for buffer API improvements
+        if should_parallelize(len, PARALLEL_THRESHOLD_SUM) {
+            let data = extract_buffer_to_vec(py, buffer)?;
+            return Ok(data.par_iter().copied().reduce(|| T::default(), |a, b| a + b));
+        }
     }
+
+    let slice = buffer
+        .as_slice(py)
+        .ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
 
     Ok(slice
         .iter()
@@ -117,15 +158,32 @@ where
 }
 
 // Generic scale implementation (in-place)
-// Note: In-place operations are kept sequential for safety and cache efficiency
-fn scale_impl<T, F>(py: Python, buffer: &mut PyBuffer<T>, factor: F) -> PyResult<()>
+fn scale_impl<T, F>(py: Python, buffer: &mut PyBuffer<T>, factor: F, len: usize) -> PyResult<()>
 where
-    T: Element + Copy + std::ops::Mul<F, Output = T>,
-    F: Copy,
+    T: Element + Copy + std::ops::Mul<F, Output = T> + Send + Sync,
+    F: Copy + Send + Sync,
 {
     let slice = buffer
         .as_mut_slice(py)
         .ok_or_else(|| PyTypeError::new_err("Failed to get mutable buffer slice"))?;
+
+    #[cfg(feature = "parallel")]
+    {
+        if should_parallelize(len, PARALLEL_THRESHOLD_SCALE) {
+            // Extract data to Vec for parallel processing
+            let mut data: Vec<T> = slice.iter().map(|cell| cell.get()).collect();
+            
+            // Process in parallel
+            data.par_iter_mut().for_each(|x| *x = *x * factor);
+            
+            // Write back to buffer
+            for (item, &val) in slice.iter().zip(data.iter()) {
+                item.set(val);
+            }
+            return Ok(());
+        }
+    }
+
     for item in slice.iter() {
         item.set(item.get() * factor);
     }
@@ -168,69 +226,70 @@ fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
         }
     }
 
+    let len = get_array_len(array)?;
     match typecode {
         TypeCode::Int8 => {
             let buffer = PyBuffer::<i8>::get(array)?;
-            let result = sum_impl(py, &buffer)?;
+            let result = sum_impl(py, &buffer, len)?;
             Ok(result.to_object(py))
         }
         TypeCode::Int16 => {
             let buffer = PyBuffer::<i16>::get(array)?;
-            let result = sum_impl(py, &buffer)?;
+            let result = sum_impl(py, &buffer, len)?;
             Ok(result.to_object(py))
         }
         TypeCode::Int32 => {
             let buffer = PyBuffer::<i32>::get(array)?;
-            let result = sum_impl(py, &buffer)?;
+            let result = sum_impl(py, &buffer, len)?;
             Ok(result.to_object(py))
         }
         TypeCode::Int64 => {
             let itemsize = get_itemsize(array)?;
             if itemsize == 4 {
                 let buffer = PyBuffer::<i32>::get(array)?;
-                let result = sum_impl(py, &buffer)?;
+                let result = sum_impl(py, &buffer, len)?;
                 Ok(result.to_object(py))
             } else {
                 let buffer = PyBuffer::<i64>::get(array)?;
-                let result = sum_impl(py, &buffer)?;
+                let result = sum_impl(py, &buffer, len)?;
                 Ok(result.to_object(py))
             }
         }
         TypeCode::UInt8 => {
             let buffer = PyBuffer::<u8>::get(array)?;
-            let result = sum_impl(py, &buffer)?;
+            let result = sum_impl(py, &buffer, len)?;
             Ok(result.to_object(py))
         }
         TypeCode::UInt16 => {
             let buffer = PyBuffer::<u16>::get(array)?;
-            let result = sum_impl(py, &buffer)?;
+            let result = sum_impl(py, &buffer, len)?;
             Ok(result.to_object(py))
         }
         TypeCode::UInt32 => {
             let buffer = PyBuffer::<u32>::get(array)?;
-            let result = sum_impl(py, &buffer)?;
+            let result = sum_impl(py, &buffer, len)?;
             Ok(result.to_object(py))
         }
         TypeCode::UInt64 => {
             let itemsize = get_itemsize(array)?;
             if itemsize == 4 {
                 let buffer = PyBuffer::<u32>::get(array)?;
-                let result = sum_impl(py, &buffer)?;
+                let result = sum_impl(py, &buffer, len)?;
                 Ok(result.to_object(py))
             } else {
                 let buffer = PyBuffer::<u64>::get(array)?;
-                let result = sum_impl(py, &buffer)?;
+                let result = sum_impl(py, &buffer, len)?;
                 Ok(result.to_object(py))
             }
         }
         TypeCode::Float32 => {
             let buffer = PyBuffer::<f32>::get(array)?;
-            let result = sum_impl(py, &buffer)?;
+            let result = sum_impl(py, &buffer, len)?;
             Ok(result.to_object(py))
         }
         TypeCode::Float64 => {
             let buffer = PyBuffer::<f64>::get(array)?;
-            let result = sum_impl(py, &buffer)?;
+            let result = sum_impl(py, &buffer, len)?;
             Ok(result.to_object(py))
         }
     }
@@ -243,62 +302,63 @@ fn scale(py: Python, array: &PyAny, factor: f64) -> PyResult<()> {
     let typecode = get_typecode(array)?;
 
     // Handle empty arrays early to avoid buffer alignment issues on macOS
-    if get_array_len(array)? == 0 {
+    let len = get_array_len(array)?;
+    if len == 0 {
         return Ok(());
     }
 
     match typecode {
         TypeCode::Int8 => {
             let mut buffer = PyBuffer::<i8>::get(array)?;
-            scale_impl(py, &mut buffer, factor as i8)
+            scale_impl(py, &mut buffer, factor as i8, len)
         }
         TypeCode::Int16 => {
             let mut buffer = PyBuffer::<i16>::get(array)?;
-            scale_impl(py, &mut buffer, factor as i16)
+            scale_impl(py, &mut buffer, factor as i16, len)
         }
         TypeCode::Int32 => {
             let mut buffer = PyBuffer::<i32>::get(array)?;
-            scale_impl(py, &mut buffer, factor as i32)
+            scale_impl(py, &mut buffer, factor as i32, len)
         }
         TypeCode::Int64 => {
             let itemsize = get_itemsize(array)?;
             if itemsize == 4 {
                 let mut buffer = PyBuffer::<i32>::get(array)?;
-                scale_impl(py, &mut buffer, factor as i32)
+                scale_impl(py, &mut buffer, factor as i32, len)
             } else {
                 let mut buffer = PyBuffer::<i64>::get(array)?;
-                scale_impl(py, &mut buffer, factor as i64)
+                scale_impl(py, &mut buffer, factor as i64, len)
             }
         }
         TypeCode::UInt8 => {
             let mut buffer = PyBuffer::<u8>::get(array)?;
-            scale_impl(py, &mut buffer, factor as u8)
+            scale_impl(py, &mut buffer, factor as u8, len)
         }
         TypeCode::UInt16 => {
             let mut buffer = PyBuffer::<u16>::get(array)?;
-            scale_impl(py, &mut buffer, factor as u16)
+            scale_impl(py, &mut buffer, factor as u16, len)
         }
         TypeCode::UInt32 => {
             let mut buffer = PyBuffer::<u32>::get(array)?;
-            scale_impl(py, &mut buffer, factor as u32)
+            scale_impl(py, &mut buffer, factor as u32, len)
         }
         TypeCode::UInt64 => {
             let itemsize = get_itemsize(array)?;
             if itemsize == 4 {
                 let mut buffer = PyBuffer::<u32>::get(array)?;
-                scale_impl(py, &mut buffer, factor as u32)
+                scale_impl(py, &mut buffer, factor as u32, len)
             } else {
                 let mut buffer = PyBuffer::<u64>::get(array)?;
-                scale_impl(py, &mut buffer, factor as u64)
+                scale_impl(py, &mut buffer, factor as u64, len)
             }
         }
         TypeCode::Float32 => {
             let mut buffer = PyBuffer::<f32>::get(array)?;
-            scale_impl(py, &mut buffer, factor as f32)
+            scale_impl(py, &mut buffer, factor as f32, len)
         }
         TypeCode::Float64 => {
             let mut buffer = PyBuffer::<f64>::get(array)?;
-            scale_impl(py, &mut buffer, factor)
+            scale_impl(py, &mut buffer, factor, len)
         }
     }
 }

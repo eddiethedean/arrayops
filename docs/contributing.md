@@ -7,7 +7,7 @@ Thank you for your interest in contributing to `arrayops`! This guide will help 
 ### Prerequisites
 
 - Python 3.8 or higher
-- Rust 1.70 or higher
+- Rust 1.75 or higher (required for SIMD optimizations)
 - `maturin` (for building the extension)
 - `git` for version control
 

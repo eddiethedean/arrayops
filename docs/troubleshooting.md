@@ -44,7 +44,7 @@ error: failed to compile `arrayops`
 1. **Update Rust:**
    ```bash
    rustup update
-   rustc --version  # Should be 1.70+
+   rustc --version  # Should be 1.75+
    ```
 
 2. **Clean and rebuild:**

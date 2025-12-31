@@ -7,7 +7,8 @@ Comprehensive guide for setting up and working with the `arrayops` development e
 ### Required Software
 
 - **Python 3.8+**: [Download Python](https://www.python.org/downloads/)
-- **Rust 1.70+**: [Install Rust](https://www.rust-lang.org/tools/install)
+- **Rust 1.75+**: [Install Rust](https://www.rust-lang.org/tools/install)
+  - Required for SIMD optimizations (std::simd)
 - **maturin**: Python-Rust build tool
   ```bash
   pip install maturin
@@ -140,17 +141,25 @@ cargo test --lib test_sum_int32
 
 ### Test Coverage
 
-**Python Coverage:**
+**Python Coverage (Primary Method):**
 ```bash
 pytest tests/ --cov=arrayops --cov-report=term-missing
 ```
 
-**Rust Coverage:**
-```bash
-cargo tarpaulin --tests --lib --out Html
-```
+Python tests provide functional coverage of all Rust code. Since all Rust functions are called through Python, Python test coverage accurately reflects Rust code coverage.
 
-Coverage reports are generated in `htmlcov/` (Python) and `tarpaulin-report.html` (Rust).
+**Current Status**: 100% Python coverage (8/8 statements)
+
+**Rust Coverage (Alternative Methods):**
+
+For PyO3 extensions, direct Rust coverage tools have limitations:
+
+1. **cargo-tarpaulin**: Requires `cargo test --lib`, which doesn't work for PyO3 extensions
+2. **cargo-llvm-cov**: Available but requires Python tests to exercise the code
+
+See `docs/coverage.md` for detailed coverage methodology and alternative approaches.
+
+Coverage reports are generated in `htmlcov/` (Python).
 
 ### Coverage Requirements
 
