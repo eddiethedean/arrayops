@@ -93,13 +93,14 @@ jobs:
     - name: Install maturin
       run: pip install maturin
 
-    - name: Build wheels
+    - name: Build wheels (Linux with manylinux)
+      if: matrix.os == 'ubuntu-latest'
       run: |
-        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-          docker run --rm -v "${{ github.workspace }}":/io -w /io ghcr.io/pyo3/maturin:main build --release --out dist --manylinux manylinux_2_24
-        else
-          maturin build --release --out dist
-        fi
+        docker run --rm -v "${{ github.workspace }}":/io -w /io ghcr.io/pyo3/maturin:main build --release --out dist --manylinux manylinux_2_24
+
+    - name: Build wheels (macOS/Windows)
+      if: matrix.os != 'ubuntu-latest'
+      run: maturin build --release --out dist
 
     - name: Upload wheels
       uses: actions/upload-artifact@v4

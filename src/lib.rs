@@ -448,7 +448,7 @@ where
 {
     let slice = buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
     
-    if slice.len() == 0 {
+    if slice.is_empty() {
         return match initial {
             Some(init) => Ok(init),
             None => Err(PyValueError::new_err("reduce() of empty array with no initial value")),
