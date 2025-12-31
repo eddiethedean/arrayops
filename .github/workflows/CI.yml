@@ -48,7 +48,13 @@ jobs:
       run: pip install target/wheels/arrayops-*.whl --force-reinstall
 
     - name: Run Python tests
-      run: python -m pytest tests/ --import-mode=importlib
+      shell: bash
+      run: |
+        # Temporarily rename source arrayops directory to avoid import conflicts
+        mv arrayops arrayops_src || true
+        python -m pytest tests/ --import-mode=importlib
+        # Restore source directory
+        mv arrayops_src arrayops || true
 
   test-features:
     name: Test with features ${{ matrix.features }}
@@ -85,7 +91,13 @@ jobs:
       run: pip install target/wheels/arrayops-*.whl --force-reinstall
 
     - name: Run Python tests
-      run: python -m pytest tests/ --import-mode=importlib
+      shell: bash
+      run: |
+        # Temporarily rename source arrayops directory to avoid import conflicts
+        mv arrayops arrayops_src || true
+        python -m pytest tests/ --import-mode=importlib
+        # Restore source directory
+        mv arrayops_src arrayops || true
 
   lint:
     name: Lint
