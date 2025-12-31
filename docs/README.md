@@ -71,7 +71,7 @@ To publish to Read the Docs:
 
 1. Connect your GitHub repository to Read the Docs
 2. The documentation will be built automatically on commits
-3. Documentation will be available at `https://arrayops.readthedocs.io/`
+3. Documentation will be available at `https://ao.readthedocs.io/`
 
 ## Configuration
 

@@ -53,7 +53,7 @@ Create a lightweight Rust extension that:
 │   Python     │
 │              │
 │ array.array  │  ← unchanged
-│ arrayops/_arrayops.py │
+│ arrayops/_ao.py │
 └──────┬───────┘
        │ buffer protocol
        ▼
@@ -73,25 +73,25 @@ Create a lightweight Rust extension that:
 ### Module layout
 
 ```python
-import arrayops
+import arrayops as ao
 ```
 
 ### Core operations
 
 ```
-arrayops.map(arr, fn)                -> array
-arrayops.map_inplace(arr, fn)        -> None
+ao.map(arr, fn)                -> array
+ao.map_inplace(arr, fn)        -> None
 
-arrayops.filter(arr, predicate)      -> array
+ao.filter(arr, predicate)      -> array
 
-arrayops.reduce(arr, fn, initial)    -> scalar
+ao.reduce(arr, fn, initial)    -> scalar
 
-arrayops.sum(arr)                    -> scalar
-arrayops.mean(arr)                   -> float
-arrayops.min(arr), arrayops.max(arr)
+ao.sum(arr)                    -> scalar
+ao.mean(arr)                   -> float
+ao.min(arr), ao.max(arr)
 
-arrayops.scale(arr, factor)          -> None
-arrayops.clip(arr, min, max)         -> None
+ao.scale(arr, factor)          -> None
+ao.clip(arr, min, max)         -> None
 ```
 
 ### Type restrictions
@@ -150,8 +150,8 @@ Each kernel is monomorphized → fast loops.
 #### A. Fast path (no Python calls)
 
 ```python
-arrayops.scale(arr, 1.5)
-arrayops.sum(arr)
+ao.scale(arr, 1.5)
+ao.sum(arr)
 ```
 
 - Pure Rust loop
@@ -161,7 +161,7 @@ arrayops.sum(arr)
 #### B. Callback path (slower, flexible)
 
 ```python
-arrayops.map(arr, lambda x: x * x)
+ao.map(arr, lambda x: x * x)
 ```
 
 - GIL held

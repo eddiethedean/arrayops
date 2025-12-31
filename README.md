@@ -4,7 +4,7 @@
 
 **Rust-backed acceleration for Python's `array.array` type**
 
-[![PyPI](https://img.shields.io/pypi/v/arrayops.svg)](https://pypi.org/project/arrayops/)
+[![PyPI](https://img.shields.io/pypi/v/ao.svg)](https://pypi.org/project/arrayops/)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Rust](https://img.shields.io/badge/rust-1.75+-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -61,30 +61,30 @@ maturin build --release --features parallel
 
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Create an array
 data = array.array('i', [1, 2, 3, 4, 5])
 
 # Fast sum operation
-total = arrayops.sum(data)
+total = ao.sum(data)
 print(total)  # 15
 
 # In-place scaling
-arrayops.scale(data, 2.0)
+ao.scale(data, 2.0)
 print(list(data))  # [2, 4, 6, 8, 10]
 
 # Map operation (returns new array)
-doubled = arrayops.map(data, lambda x: x * 2)
+doubled = ao.map(data, lambda x: x * 2)
 print(list(doubled))  # [4, 8, 12, 16, 20]
 
 # Filter operation
-evens = arrayops.filter(data, lambda x: x % 2 == 0)
+evens = ao.filter(data, lambda x: x % 2 == 0)
 print(list(evens))  # [2, 4, 6, 8, 10]
 
 # Reduce operation (use fresh array for clarity)
 data2 = array.array('i', [1, 2, 3, 4, 5])
-product = arrayops.reduce(data2, lambda acc, x: acc * x)
+product = ao.reduce(data2, lambda acc, x: acc * x)
 print(product)  # 120
 ```
 
@@ -117,15 +117,15 @@ Compute the sum of all elements in an array.
 **Example:**
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Integer array
 arr = array.array('i', [1, 2, 3, 4, 5])
-result = arrayops.sum(arr)  # Returns: 15 (int)
+result = ao.sum(arr)  # Returns: 15 (int)
 
 # Float array
 farr = array.array('f', [1.5, 2.5, 3.5])
-result = arrayops.sum(farr)  # Returns: 7.5 (float)
+result = ao.sum(farr)  # Returns: 7.5 (float)
 ```
 
 ### `scale(arr, factor) -> None`
@@ -147,15 +147,15 @@ Scale all elements of an array in-place by a factor.
 **Example:**
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 arr = array.array('i', [1, 2, 3, 4, 5])
-arrayops.scale(arr, 2.0)
+ao.scale(arr, 2.0)
 print(list(arr))  # [2, 4, 6, 8, 10]
 
 # Float arrays work too
 farr = array.array('f', [1.0, 2.0, 3.0])
-arrayops.scale(farr, 1.5)
+ao.scale(farr, 1.5)
 print(list(farr))  # [1.5, 3.0, 4.5]
 ```
 
@@ -179,17 +179,17 @@ Apply a function to each element, returning a new array.
 **Example:**
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 arr = array.array('i', [1, 2, 3, 4, 5])
-doubled = arrayops.map(arr, lambda x: x * 2)
+doubled = ao.map(arr, lambda x: x * 2)
 print(list(doubled))  # [2, 4, 6, 8, 10]
 
 # Using named function
 def square(x):
     return x * x
 
-squared = arrayops.map(arr, square)
+squared = ao.map(arr, square)
 print(list(squared))  # [1, 4, 9, 16, 25]
 ```
 
@@ -212,10 +212,10 @@ Apply a function to each element in-place.
 **Example:**
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 arr = array.array('i', [1, 2, 3, 4, 5])
-arrayops.map_inplace(arr, lambda x: x * 2)
+ao.map_inplace(arr, lambda x: x * 2)
 print(list(arr))  # [2, 4, 6, 8, 10]
 ```
 
@@ -239,14 +239,14 @@ Filter elements using a predicate function, returning a new array.
 **Example:**
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 arr = array.array('i', [1, 2, 3, 4, 5, 6])
-evens = arrayops.filter(arr, lambda x: x % 2 == 0)
+evens = ao.filter(arr, lambda x: x % 2 == 0)
 print(list(evens))  # [2, 4, 6]
 
 # Filter values greater than threshold
-large = arrayops.filter(arr, lambda x: x > 3)
+large = ao.filter(arr, lambda x: x > 3)
 print(list(large))  # [4, 5, 6]
 ```
 
@@ -269,20 +269,20 @@ Reduce array to a single value using a binary function.
 **Example:**
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 arr = array.array('i', [1, 2, 3, 4, 5])
 
 # Sum using reduce
-total = arrayops.reduce(arr, lambda acc, x: acc + x)
+total = ao.reduce(arr, lambda acc, x: acc + x)
 print(total)  # 15
 
 # Product with initial value
-product = arrayops.reduce(arr, lambda acc, x: acc * x, initial=1)
+product = ao.reduce(arr, lambda acc, x: acc * x, initial=1)
 print(product)  # 120
 
 # Maximum value
-maximum = arrayops.reduce(arr, lambda acc, x: acc if acc > x else x)
+maximum = ao.reduce(arr, lambda acc, x: acc if acc > x else x)
 print(maximum)  # 5
 ```
 
@@ -292,29 +292,29 @@ print(maximum)  # 5
 
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Create and sum an array
 data = array.array('i', [10, 20, 30, 40, 50])
-total = arrayops.sum(data)
+total = ao.sum(data)
 print(f"Sum: {total}")  # Sum: 150
 
 # Scale in-place (use float array for fractional factors)
 data_float = array.array('f', [10.0, 20.0, 30.0, 40.0, 50.0])
-arrayops.scale(data_float, 1.5)
+ao.scale(data_float, 1.5)
 print(list(data_float))  # [15.0, 30.0, 45.0, 60.0, 75.0]
 
 # Map operation
-doubled = arrayops.map(data, lambda x: x * 2)
+doubled = ao.map(data, lambda x: x * 2)
 print(list(doubled))  # [20, 40, 60, 80, 100]
 
 # Filter operation
-evens = arrayops.filter(data, lambda x: x % 20 == 0)
+evens = ao.filter(data, lambda x: x % 20 == 0)
 print(list(evens))  # [20, 40]
 
 # Reduce operation (use fresh array)
 data_reduce = array.array('i', [10, 20, 30, 40, 50])
-product = arrayops.reduce(data_reduce, lambda acc, x: acc * x, initial=1)
+product = ao.reduce(data_reduce, lambda acc, x: acc * x, initial=1)
 print(product)  # 12000000
 ```
 
@@ -322,7 +322,7 @@ print(product)  # 12000000
 
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Read binary data efficiently
 with open('sensor_data.bin', 'rb') as f:
@@ -330,7 +330,7 @@ with open('sensor_data.bin', 'rb') as f:
     data.fromfile(f, 10000)  # Read 10,000 floats
 
 # Fast aggregation
-total = arrayops.sum(data)
+total = ao.sum(data)
 mean = total / len(data)
 print(f"Average: {mean}")
 ```
@@ -339,7 +339,7 @@ print(f"Average: {mean}")
 
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Process large dataset
 sensor_readings = array.array('f', [10.5, 25.3, 15.8, 30.2, 20.1, 18.7, 22.4])
@@ -354,11 +354,11 @@ if range_size > 0:
     for i in range(len(sensor_readings)):
         sensor_readings[i] -= min_val
     # Scale to 0-1
-    arrayops.scale(sensor_readings, 1.0 / range_size)
+    ao.scale(sensor_readings, 1.0 / range_size)
     # Now all values are in [0, 1] range
 
 # Compute statistics
-total = arrayops.sum(sensor_readings)
+total = ao.sum(sensor_readings)
 mean = total / len(sensor_readings)
 ```
 
@@ -366,12 +366,12 @@ mean = total / len(sensor_readings)
 
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Empty arrays are handled gracefully
 empty = array.array('i', [])
-result = arrayops.sum(empty)  # Returns 0
-arrayops.scale(empty, 5.0)    # No error, array remains empty
+result = ao.sum(empty)  # Returns 0
+ao.scale(empty, 5.0)    # No error, array remains empty
 ```
 
 ## ⚡ Performance
@@ -391,7 +391,7 @@ arrayops.scale(empty, 5.0)    # No error, array remains empty
 
 ```python
 import array
-import arrayops
+import arrayops as ao
 import time
 
 # Create large array (100K integers - note: use smaller for int32 to avoid overflow)
@@ -404,7 +404,7 @@ python_time = time.perf_counter() - start
 
 # arrayops sum
 start = time.perf_counter()
-arrayops_sum = arrayops.sum(arr)
+arrayops_sum = ao.sum(arr)
 arrayops_time = time.perf_counter() - start
 
 print(f"Python sum: {python_time*1000:.2f}ms")
@@ -428,7 +428,7 @@ For large arrays, parallel execution can provide significant speedups on multi-c
 ```python
 # Large arrays automatically benefit from parallel execution when feature is enabled
 large_array = array.array('i', range(1_000_000))
-total = arrayops.sum(large_array)  # Uses parallel processing automatically
+total = ao.sum(large_array)  # Uses parallel processing automatically
 ```
 
 **Note**: Operations with Python callables (`map`, `filter`, `reduce`) have limited parallelization benefits due to Python's Global Interpreter Lock (GIL).
@@ -584,14 +584,14 @@ See the [Performance Features](#performance-features) section above for details.
 `arrayops` provides clear error messages:
 
 ```python
-import arrayops
+import arrayops as ao
 
 # Wrong type
-arrayops.sum([1, 2, 3])  # TypeError: Expected array.array
+ao.sum([1, 2, 3])  # TypeError: Expected array.array
 
 # Unsupported typecode
 arr = array.array('c', b'abc')
-arrayops.sum(arr)  # TypeError: Unsupported typecode: 'c'
+ao.sum(arr)  # TypeError: Unsupported typecode: 'c'
 ```
 
 ## 🗺️ Roadmap
@@ -633,7 +633,7 @@ MIT License - see LICENSE file for details.
 ## 📞 Support
 
 - **Issues**: Report bugs or request features on GitHub
-- **Documentation**: See [docs/](docs/) directory or [Read the Docs](https://arrayops.readthedocs.io/) (when published)
+- **Documentation**: See [docs/](docs/) directory or [Read the Docs](https://ao.readthedocs.io/) (when published)
 - **Questions**: Open a discussion on GitHub
 
 ---

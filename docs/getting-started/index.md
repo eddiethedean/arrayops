@@ -47,29 +47,29 @@ maturin build --release --features parallel
 
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Create an array
 data = array.array('i', [1, 2, 3, 4, 5])
 
 # Fast sum operation
-total = arrayops.sum(data)
+total = ao.sum(data)
 print(total)  # 15
 
 # In-place scaling
-arrayops.scale(data, 2.0)
+ao.scale(data, 2.0)
 print(list(data))  # [2, 4, 6, 8, 10]
 
 # Map operation (returns new array)
-doubled = arrayops.map(data, lambda x: x * 2)
+doubled = ao.map(data, lambda x: x * 2)
 print(list(doubled))  # [4, 8, 12, 16, 20]
 
 # Filter operation
-evens = arrayops.filter(data, lambda x: x % 2 == 0)
+evens = ao.filter(data, lambda x: x % 2 == 0)
 print(list(evens))  # [2, 4, 6, 8, 10]
 
 # Reduce operation
-product = arrayops.reduce(data, lambda acc, x: acc * x, initial=1)
+product = ao.reduce(data, lambda acc, x: acc * x, initial=1)
 print(product)  # 120
 ```
 

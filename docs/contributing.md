@@ -15,7 +15,7 @@ Thank you for your interest in contributing to `arrayops`! This guide will help 
 
 1. **Fork and clone the repository:**
    ```bash
-   git clone https://github.com/your-username/arrayops.git
+   git clone https://github.com/your-username/ao.git
    cd arrayops
    ```
 
@@ -31,7 +31,7 @@ Thank you for your interest in contributing to `arrayops`! This guide will help 
 
 4. **Verify the installation:**
    ```bash
-   python -c "import arrayops; print(arrayops.__version__)"
+   python -c "import arrayops; print(ao.__version__)"
    ```
 
 ## Development Workflow
@@ -152,18 +152,18 @@ fn new_function(py: Python, array: &PyAny) -> PyResult<PyObject> {
 ```python
 import pytest
 import array
-import arrayops
+import arrayops as ao
 
 def test_new_function_basic():
     """Test basic functionality."""
     arr = array.array('i', [1, 2, 3])
-    result = arrayops.new_function(arr, 2.0)
+    result = ao.new_function(arr, 2.0)
     assert result == expected_value
 
 def test_new_function_edge_cases():
     """Test edge cases."""
     empty = array.array('i', [])
-    result = arrayops.new_function(empty, 1.0)
+    result = ao.new_function(empty, 1.0)
     assert result == 0
 ```
 
@@ -217,7 +217,7 @@ cargo tarpaulin --tests --lib
    - Register in `#[pymodule]` function
    - Update `__all__` in `arrayops/__init__.py`
 
-4. **Add Type Stubs (`arrayops/_arrayops.pyi`):**
+4. **Add Type Stubs (`arrayops/_ao.pyi`):**
    - Add function signature with type hints
    - Include docstring
 
@@ -236,7 +236,7 @@ cargo tarpaulin --tests --lib
 See the existing `sum` and `scale` implementations as reference:
 - `src/lib.rs` - Rust implementation
 - `arrayops/__init__.py` - Python wrapper
-- `arrayops/_arrayops.pyi` - Type stubs
+- `arrayops/_ao.pyi` - Type stubs
 - `tests/test_basic.py` - Test examples
 
 ## Code Review Process

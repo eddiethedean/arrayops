@@ -8,7 +8,7 @@ Common issues and solutions for `arrayops`.
 
 **Error:**
 ```
-ImportError: No module named 'arrayops._arrayops'
+ImportError: No module named 'ao._arrayops'
 ```
 
 **Solutions:**
@@ -19,7 +19,7 @@ ImportError: No module named 'arrayops._arrayops'
 
 2. **Verify installation:**
    ```bash
-   python -c "import arrayops; print(arrayops.__version__)"
+   python -c "import arrayops; print(ao.__version__)"
    ```
 
 3. **Check Python version:**
@@ -110,12 +110,12 @@ Ensure you're passing an `array.array` instance:
 
 ```python
 # Wrong
-arrayops.sum([1, 2, 3])  # Python list
+ao.sum([1, 2, 3])  # Python list
 
 # Correct
 import array
 arr = array.array('i', [1, 2, 3])
-arrayops.sum(arr)
+ao.sum(arr)
 ```
 
 ### Issue: Results don't match Python's sum
@@ -130,7 +130,7 @@ For integer arrays, Python may promote to larger types on overflow. `arrayops` f
 
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Large values may overflow in smaller types
 arr = array.array('b', [127, 1])  # int8, max value is 127
@@ -226,7 +226,7 @@ Install Visual Studio Build Tools:
 1. **Use in-place operations:**
    ```python
    # Good: In-place
-   arrayops.scale(arr, 2.0)
+   ao.scale(arr, 2.0)
    
    # Avoid: Creating copies when possible
    ```
@@ -290,16 +290,16 @@ cargo build --verbose
 ### Check Installation
 
 ```python
-import arrayops
-print(arrayops.__version__)
-print(arrayops.__file__)  # Location of package
+import arrayops as ao
+print(ao.__version__)
+print(ao.__file__)  # Location of package
 ```
 
 ### Test Import
 
 ```python
 # Test basic import
-import arrayops
+import arrayops as ao
 
 # Test function import
 from arrayops import sum, scale
@@ -307,7 +307,7 @@ from arrayops import sum, scale
 # Test with array
 import array
 arr = array.array('i', [1, 2, 3])
-result = arrayops.sum(arr)
+result = ao.sum(arr)
 print(result)  # Should print: 6
 ```
 
@@ -315,7 +315,7 @@ print(result)  # Should print: 6
 
 ```bash
 # Check if extension module exists
-python -c "import arrayops._arrayops; print('OK')"
+python -c "import ao._arrayops; print('OK')"
 ```
 
 ## Getting Help

@@ -110,7 +110,7 @@ The `sum` operation is highly optimized:
 
 ```python
 import array
-import arrayops
+import arrayops as ao
 import time
 
 def benchmark_sum(size=100_000):
@@ -124,7 +124,7 @@ def benchmark_sum(size=100_000):
     
     # arrayops sum
     start = time.perf_counter()
-    arrayops_result = arrayops.sum(arr)
+    arrayops_result = ao.sum(arr)
     arrayops_time = time.perf_counter() - start
     
     # Verify results match
@@ -165,7 +165,7 @@ The `scale` operation benefits from:
 
 ```python
 import array
-import arrayops
+import arrayops as ao
 import time
 
 def benchmark_scale(size=100_000):
@@ -181,7 +181,7 @@ def benchmark_scale(size=100_000):
     
     # arrayops scale
     start = time.perf_counter()
-    arrayops.scale(arr2, 2.0)
+    ao.scale(arr2, 2.0)
     arrayops_time = time.perf_counter() - start
     
     speedup = python_time / arrayops_time
@@ -202,7 +202,7 @@ def benchmark_scale(size=100_000):
 ```python
 # No copying occurs - direct memory access
 arr = array.array('i', [1, 2, 3, 4, 5])
-total = arrayops.sum(arr)  # Direct access to arr's memory
+total = ao.sum(arr)  # Direct access to arr's memory
 ```
 
 **Benefits:**
@@ -215,9 +215,9 @@ total = arrayops.sum(arr)  # Direct access to arr's memory
 | Operation | Memory Overhead |
 |-----------|----------------|
 | Python `sum()` | Minimal (iterator overhead) |
-| `arrayops.sum()` | Zero (direct buffer access) |
+| `ao.sum()` | Zero (direct buffer access) |
 | Python loop | Minimal |
-| `arrayops.scale()` | Zero (in-place modification) |
+| `ao.scale()` | Zero (in-place modification) |
 
 ## When to Use arrayops
 
@@ -270,7 +270,7 @@ def process_large_file(file_path, batch_size=10000):
                 break
             
             # Process batch
-            total = arrayops.sum(batch)
+            total = ao.sum(batch)
             results.append(total)
     
     return results
@@ -281,18 +281,18 @@ def process_large_file(file_path, batch_size=10000):
 ```python
 # Good: Work directly with array.array
 arr = array.array('i', [1, 2, 3])
-total = arrayops.sum(arr)
+total = ao.sum(arr)
 
 # Avoid: Converting to list
 arr = array.array('i', [1, 2, 3])
-total = arrayops.sum(array.array('i', list(arr)))  # Unnecessary copy
+total = ao.sum(array.array('i', list(arr)))  # Unnecessary copy
 ```
 
 ### 4. Prefer In-Place Operations
 
 ```python
 # Good: In-place scaling
-arrayops.scale(arr, 2.0)  # Modifies arr directly
+ao.scale(arr, 2.0)  # Modifies arr directly
 
 # Avoid: Creating new arrays when possible
 # (When future operations support it)
@@ -306,7 +306,7 @@ Create a benchmark script to track performance:
 
 ```python
 import array
-import arrayops
+import arrayops as ao
 import time
 import json
 
@@ -319,7 +319,7 @@ def run_benchmarks():
         arr = array.array('i', list(range(size)))
         
         start = time.perf_counter()
-        result = arrayops.sum(arr)
+        result = ao.sum(arr)
         elapsed = time.perf_counter() - start
         
         results[f'sum_{size}'] = {
@@ -359,13 +359,13 @@ See [ROADMAP.md](ROADMAP.md) for details.
 ```python
 import cProfile
 import array
-import arrayops
+import arrayops as ao
 
 arr = array.array('i', list(range(100_000)))  # Use smaller size for int32 to avoid overflow
 
 profiler = cProfile.Profile()
 profiler.enable()
-result = arrayops.sum(arr)
+result = ao.sum(arr)
 profiler.disable()
 profiler.print_stats()
 ```

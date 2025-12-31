@@ -30,7 +30,7 @@ Comprehensive guide for setting up and working with the `arrayops` development e
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/arrayops.git
+git clone https://github.com/your-username/ao.git
 cd arrayops
 ```
 
@@ -56,7 +56,7 @@ This compiles the Rust extension and installs it in development mode. Changes to
 ### 4. Verify Installation
 
 ```bash
-python -c "import arrayops; print(arrayops.__version__)"
+python -c "import arrayops; print(ao.__version__)"
 # Should output: 0.1.0
 ```
 
@@ -66,7 +66,7 @@ python -c "import arrayops; print(arrayops.__version__)"
 arrayops/
 ├── arrayops/              # Python package
 │   ├── __init__.py       # Package initialization
-│   └── _arrayops.pyi     # Type stubs for mypy
+│   └── _ao.pyi     # Type stubs for mypy
 ├── src/                  # Rust source code
 │   └── lib.rs           # Main Rust implementation
 ├── tests/                # Python tests
@@ -259,7 +259,7 @@ Or use your IDE's debugger.
 - Solution: Verify installation with `python -c "import arrayops"`
 
 **Issue: Type errors**
-- Solution: Check type stubs in `_arrayops.pyi`
+- Solution: Check type stubs in `_ao.pyi`
 
 ## Profiling and Performance Analysis
 
@@ -267,13 +267,13 @@ Or use your IDE's debugger.
 
 ```python
 import cProfile
-import arrayops
+import arrayops as ao
 import array
 
 arr = array.array('i', list(range(1_000_000)))
 profiler = cProfile.Profile()
 profiler.enable()
-result = arrayops.sum(arr)
+result = ao.sum(arr)
 profiler.disable()
 profiler.print_stats()
 ```
@@ -298,13 +298,13 @@ Create benchmark scripts:
 ```python
 import time
 import array
-import arrayops
+import arrayops as ao
 
 arr = array.array('i', list(range(1_000_000)))
 
 # Benchmark
 start = time.perf_counter()
-result = arrayops.sum(arr)
+result = ao.sum(arr)
 elapsed = time.perf_counter() - start
 print(f"Time: {elapsed*1000:.2f}ms")
 ```
@@ -380,7 +380,7 @@ See `.github/workflows/` for CI configuration.
 
 1. Add Rust implementation in `src/lib.rs`
 2. Add Python wrapper in `arrayops/__init__.py`
-3. Add type stubs in `arrayops/_arrayops.pyi`
+3. Add type stubs in `arrayops/_ao.pyi`
 4. Add tests in `tests/test_basic.py`
 5. Update documentation
 
