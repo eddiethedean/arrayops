@@ -38,6 +38,59 @@ arrayops.scale(values, 0.01)  # Convert to 0.0-1.0 range
 print(list(values))  # [0.25, 0.5, 0.75, 1.0]
 ```
 
+### Mapping Arrays
+
+```python
+import array
+import arrayops
+
+# Double each element
+data = array.array('i', [1, 2, 3, 4, 5])
+doubled = arrayops.map(data, lambda x: x * 2)
+print(list(doubled))  # [2, 4, 6, 8, 10]
+
+# Square values
+squared = arrayops.map(data, lambda x: x * x)
+print(list(squared))  # [1, 4, 9, 16, 25]
+
+# In-place transformation (more efficient)
+arrayops.map_inplace(data, lambda x: x * 2)
+print(list(data))  # [2, 4, 6, 8, 10]
+```
+
+### Filtering Arrays
+
+```python
+import array
+import arrayops
+
+# Filter even numbers
+data = array.array('i', [1, 2, 3, 4, 5, 6])
+evens = arrayops.filter(data, lambda x: x % 2 == 0)
+print(list(evens))  # [2, 4, 6]
+
+# Filter values above threshold
+large = arrayops.filter(data, lambda x: x > 3)
+print(list(large))  # [4, 5, 6]
+```
+
+### Reducing Arrays
+
+```python
+import array
+import arrayops
+
+data = array.array('i', [1, 2, 3, 4, 5])
+
+# Sum
+total = arrayops.reduce(data, lambda acc, x: acc + x)
+print(total)  # 15
+
+# Product
+product = arrayops.reduce(data, lambda acc, x: acc * x, initial=1)
+print(product)  # 120
+```
+
 ## Binary Protocol Parsing
 
 ### Reading Sensor Data
@@ -320,13 +373,138 @@ transformed = transform_pipeline(data)
 print(list(transformed))
 ```
 
+## Data Transformation
+
+### Map Operations
+
+```python
+import array
+import arrayops
+
+# Transform sensor readings
+readings = array.array('f', [10.5, 20.3, 15.8, 30.2, 25.1])
+
+# Convert Celsius to Fahrenheit
+fahrenheit = arrayops.map(readings, lambda c: c * 9.0 / 5.0 + 32.0)
+print(list(fahrenheit))  # [50.9, 68.54, 60.44, 86.36, 77.18]
+
+# Square all values
+squared = arrayops.map(readings, lambda x: x * x)
+print(list(squared))  # [110.25, 412.09, 249.64, 912.04, 630.01]
+
+# In-place transformation (more memory efficient)
+arrayops.map_inplace(readings, lambda x: x * 2.0)
+print(list(readings))  # [21.0, 40.6, 31.6, 60.4, 50.2]
+```
+
+### Data Filtering
+
+```python
+import array
+import arrayops
+
+# Filter sensor readings
+readings = array.array('f', [10.5, 20.3, 15.8, 30.2, 25.1, 5.2, 35.0])
+
+# Filter readings above threshold
+high_readings = arrayops.filter(readings, lambda x: x > 20.0)
+print(list(high_readings))  # [20.3, 30.2, 25.1, 35.0]
+
+# Filter even integers
+numbers = array.array('i', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+evens = arrayops.filter(numbers, lambda x: x % 2 == 0)
+print(list(evens))  # [2, 4, 6, 8, 10]
+
+# Filter valid ranges
+temperatures = array.array('f', [-10.0, 20.0, 25.0, 30.0, 45.0, -5.0])
+valid_temps = arrayops.filter(temperatures, lambda t: 0.0 <= t <= 40.0)
+print(list(valid_temps))  # [20.0, 25.0, 30.0]
+```
+
+### Aggregation
+
+```python
+import array
+import arrayops
+
+data = array.array('i', [1, 2, 3, 4, 5])
+
+# Sum
+total = arrayops.reduce(data, lambda acc, x: acc + x)
+print(total)  # 15
+
+# Product
+product = arrayops.reduce(data, lambda acc, x: acc * x, initial=1)
+print(product)  # 120
+
+# Maximum
+maximum = arrayops.reduce(data, lambda acc, x: acc if acc > x else x)
+print(maximum)  # 5
+
+# Minimum
+minimum = arrayops.reduce(data, lambda acc, x: acc if acc < x else x)
+print(minimum)  # 1
+
+# Count elements (using reduce)
+count = arrayops.reduce(data, lambda acc, x: acc + 1, initial=0)
+print(count)  # 5
+```
+
+### Complex Pipelines
+
+```python
+import array
+import arrayops
+
+# Process sensor data pipeline
+sensor_data = array.array('f', [10.5, 20.3, 15.8, 30.2, 25.1, 5.2, 35.0])
+
+# Step 1: Filter valid readings (0-40 range)
+valid = arrayops.filter(sensor_data, lambda x: 0.0 <= x <= 40.0)
+print(f"Valid readings: {list(valid)}")  # [10.5, 20.3, 15.8, 30.2, 25.1, 5.2, 35.0]
+
+# Step 2: Transform (normalize to 0-1)
+max_val = arrayops.reduce(valid, lambda acc, x: acc if acc > x else x)
+normalized = arrayops.map(valid, lambda x: x / max_val)
+print(f"Normalized: {list(normalized)}")  # Values scaled to 0-1 range
+
+# Step 3: Compute statistics
+total = arrayops.reduce(normalized, lambda acc, x: acc + x)
+mean = total / len(normalized)
+print(f"Mean normalized value: {mean:.3f}")
+```
+
+### Map-Filter-Reduce Pattern
+
+```python
+import array
+import arrayops
+
+# Process transaction amounts
+transactions = array.array('i', [100, 200, -50, 300, -25, 150, -100, 250])
+
+# Map: Get absolute values
+abs_transactions = arrayops.map(transactions, lambda x: abs(x))
+print(list(abs_transactions))  # [100, 200, 50, 300, 25, 150, 100, 250]
+
+# Filter: Only large transactions (>100)
+large = arrayops.filter(abs_transactions, lambda x: x > 100)
+print(list(large))  # [200, 300, 150, 250]
+
+# Reduce: Sum of large transactions
+total_large = arrayops.reduce(large, lambda acc, x: acc + x)
+print(total_large)  # 900
+```
+
 ## Best Practices
 
 1. **Use appropriate types**: Choose the smallest numeric type that fits your data to save memory
-2. **Prefer in-place operations**: Use `scale()` which modifies arrays in-place when possible
+2. **Prefer in-place operations**: Use `map_inplace()` and `scale()` which modify arrays in-place when possible
 3. **Handle empty arrays**: Always check for empty arrays before operations if needed
 4. **Batch processing**: Process large datasets in chunks to manage memory
 5. **Type consistency**: Keep arrays of the same type throughout your pipeline
+6. **Use map_inplace for memory efficiency**: When you don't need the original array, use `map_inplace()` instead of `map()`
+7. **Combine operations**: Chain map, filter, and reduce operations for complex data processing pipelines
 
 ## Related Documentation
 

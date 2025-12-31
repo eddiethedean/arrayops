@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 use pyo3::buffer::{PyBuffer, Element};
-use pyo3::exceptions::PyTypeError;
+use pyo3::exceptions::{PyTypeError, PyValueError};
+use pyo3::types::PyList;
 
 /// Supported array.array typecodes
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -226,11 +227,323 @@ fn scale(py: Python, array: &PyAny, factor: f64) -> PyResult<()> {
     }
 }
 
+// Generic map implementation (returns new array)
+fn map_impl<T>(py: Python, buffer: &PyBuffer<T>, callable: &PyAny, typecode: TypeCode) -> PyResult<PyObject>
+where
+    T: Element + Copy + pyo3::ToPyObject,
+{
+    let slice = unsafe { 
+        buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?
+    };
+    
+    let array_module = PyModule::import(py, "array")?;
+    let array_type = array_module.getattr("array")?;
+    let typecode_char = typecode.as_char();
+    let result_array = array_type.call1((typecode_char, PyList::empty(py)))?;
+    
+    for cell in slice.iter() {
+        let value = cell.get();
+        let value_obj = value.to_object(py);
+        let result = callable.call1((value_obj,))?;
+        result_array.call_method1("append", (result,))?;
+    }
+    
+    Ok(result_array.to_object(py))
+}
+
+/// Map operation for array.array
+#[pyfunction]
+fn map(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<PyObject> {
+    validate_array_array(array)?;
+    let typecode = get_typecode(array)?;
+    let callable = r#fn.as_ref(py);
+    
+    match typecode {
+        TypeCode::Int8 => {
+            let buffer = PyBuffer::<i8>::get(array)?;
+            map_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::Int16 => {
+            let buffer = PyBuffer::<i16>::get(array)?;
+            map_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::Int32 => {
+            let buffer = PyBuffer::<i32>::get(array)?;
+            map_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::Int64 => {
+            let buffer = PyBuffer::<i64>::get(array)?;
+            map_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::UInt8 => {
+            let buffer = PyBuffer::<u8>::get(array)?;
+            map_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::UInt16 => {
+            let buffer = PyBuffer::<u16>::get(array)?;
+            map_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::UInt32 => {
+            let buffer = PyBuffer::<u32>::get(array)?;
+            map_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::UInt64 => {
+            let buffer = PyBuffer::<u64>::get(array)?;
+            map_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::Float32 => {
+            let buffer = PyBuffer::<f32>::get(array)?;
+            map_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::Float64 => {
+            let buffer = PyBuffer::<f64>::get(array)?;
+            map_impl(py, &buffer, callable, typecode)
+        }
+    }
+}
+
+// Generic map_inplace implementation
+fn map_inplace_impl<T>(py: Python, buffer: &mut PyBuffer<T>, callable: &PyAny) -> PyResult<()>
+where
+    T: Element + Copy + pyo3::ToPyObject + for<'a> pyo3::FromPyObject<'a>,
+{
+    let slice = unsafe { 
+        buffer.as_mut_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get mutable buffer slice"))?
+    };
+    
+    for item in slice.iter() {
+        let value = item.get();
+        let value_obj = value.to_object(py);
+        let result = callable.call1((value_obj,))?;
+        let result_value: T = result.extract()?;
+        item.set(result_value);
+    }
+    
+    Ok(())
+}
+
+/// Map in-place operation for array.array
+#[pyfunction]
+fn map_inplace(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<()> {
+    validate_array_array(array)?;
+    let typecode = get_typecode(array)?;
+    let callable = r#fn.as_ref(py);
+    
+    match typecode {
+        TypeCode::Int8 => {
+            let mut buffer = PyBuffer::<i8>::get(array)?;
+            map_inplace_impl(py, &mut buffer, callable)
+        }
+        TypeCode::Int16 => {
+            let mut buffer = PyBuffer::<i16>::get(array)?;
+            map_inplace_impl(py, &mut buffer, callable)
+        }
+        TypeCode::Int32 => {
+            let mut buffer = PyBuffer::<i32>::get(array)?;
+            map_inplace_impl(py, &mut buffer, callable)
+        }
+        TypeCode::Int64 => {
+            let mut buffer = PyBuffer::<i64>::get(array)?;
+            map_inplace_impl(py, &mut buffer, callable)
+        }
+        TypeCode::UInt8 => {
+            let mut buffer = PyBuffer::<u8>::get(array)?;
+            map_inplace_impl(py, &mut buffer, callable)
+        }
+        TypeCode::UInt16 => {
+            let mut buffer = PyBuffer::<u16>::get(array)?;
+            map_inplace_impl(py, &mut buffer, callable)
+        }
+        TypeCode::UInt32 => {
+            let mut buffer = PyBuffer::<u32>::get(array)?;
+            map_inplace_impl(py, &mut buffer, callable)
+        }
+        TypeCode::UInt64 => {
+            let mut buffer = PyBuffer::<u64>::get(array)?;
+            map_inplace_impl(py, &mut buffer, callable)
+        }
+        TypeCode::Float32 => {
+            let mut buffer = PyBuffer::<f32>::get(array)?;
+            map_inplace_impl(py, &mut buffer, callable)
+        }
+        TypeCode::Float64 => {
+            let mut buffer = PyBuffer::<f64>::get(array)?;
+            map_inplace_impl(py, &mut buffer, callable)
+        }
+    }
+}
+
+// Generic filter implementation
+fn filter_impl<T>(py: Python, buffer: &PyBuffer<T>, predicate: &PyAny, typecode: TypeCode) -> PyResult<PyObject>
+where
+    T: Element + Copy + pyo3::ToPyObject,
+{
+    let slice = unsafe { 
+        buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?
+    };
+    
+    let array_module = PyModule::import(py, "array")?;
+    let array_type = array_module.getattr("array")?;
+    let typecode_char = typecode.as_char();
+    let result_array = array_type.call1((typecode_char, PyList::empty(py)))?;
+    
+    for cell in slice.iter() {
+        let value = cell.get();
+        let value_obj = value.to_object(py);
+        let result = predicate.call1((value_obj.clone(),))?;
+        let should_include: bool = result.extract()?;
+        if should_include {
+            result_array.call_method1("append", (value_obj,))?;
+        }
+    }
+    
+    Ok(result_array.to_object(py))
+}
+
+/// Filter operation for array.array
+#[pyfunction]
+fn filter(py: Python, array: &PyAny, predicate: PyObject) -> PyResult<PyObject> {
+    validate_array_array(array)?;
+    let typecode = get_typecode(array)?;
+    let callable = predicate.as_ref(py);
+    
+    match typecode {
+        TypeCode::Int8 => {
+            let buffer = PyBuffer::<i8>::get(array)?;
+            filter_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::Int16 => {
+            let buffer = PyBuffer::<i16>::get(array)?;
+            filter_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::Int32 => {
+            let buffer = PyBuffer::<i32>::get(array)?;
+            filter_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::Int64 => {
+            let buffer = PyBuffer::<i64>::get(array)?;
+            filter_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::UInt8 => {
+            let buffer = PyBuffer::<u8>::get(array)?;
+            filter_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::UInt16 => {
+            let buffer = PyBuffer::<u16>::get(array)?;
+            filter_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::UInt32 => {
+            let buffer = PyBuffer::<u32>::get(array)?;
+            filter_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::UInt64 => {
+            let buffer = PyBuffer::<u64>::get(array)?;
+            filter_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::Float32 => {
+            let buffer = PyBuffer::<f32>::get(array)?;
+            filter_impl(py, &buffer, callable, typecode)
+        }
+        TypeCode::Float64 => {
+            let buffer = PyBuffer::<f64>::get(array)?;
+            filter_impl(py, &buffer, callable, typecode)
+        }
+    }
+}
+
+// Generic reduce implementation
+fn reduce_impl<T>(py: Python, buffer: &PyBuffer<T>, r#fn: &PyAny, initial: Option<PyObject>) -> PyResult<PyObject>
+where
+    T: Element + Copy + pyo3::ToPyObject,
+{
+    let slice = unsafe { 
+        buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?
+    };
+    
+    if slice.len() == 0 {
+        return match initial {
+            Some(init) => Ok(init),
+            None => Err(PyValueError::new_err("reduce() of empty array with no initial value")),
+        };
+    }
+    
+    let (mut acc, start_idx) = match initial {
+        Some(init) => (init, 0),
+        None => {
+            let first = slice.iter().next().unwrap().get();
+            (first.to_object(py), 1)
+        }
+    };
+    for cell in slice.iter().skip(start_idx) {
+        let value = cell.get();
+        let value_obj = value.to_object(py);
+        let result = r#fn.call1((acc, value_obj))?;
+        acc = result.to_object(py);
+    }
+    
+    Ok(acc)
+}
+
+/// Reduce operation for array.array
+#[pyfunction]
+fn reduce(py: Python, array: &PyAny, r#fn: PyObject, initial: Option<PyObject>) -> PyResult<PyObject> {
+    validate_array_array(array)?;
+    let typecode = get_typecode(array)?;
+    let callable = r#fn.as_ref(py);
+    
+    match typecode {
+        TypeCode::Int8 => {
+            let buffer = PyBuffer::<i8>::get(array)?;
+            reduce_impl(py, &buffer, callable, initial)
+        }
+        TypeCode::Int16 => {
+            let buffer = PyBuffer::<i16>::get(array)?;
+            reduce_impl(py, &buffer, callable, initial)
+        }
+        TypeCode::Int32 => {
+            let buffer = PyBuffer::<i32>::get(array)?;
+            reduce_impl(py, &buffer, callable, initial)
+        }
+        TypeCode::Int64 => {
+            let buffer = PyBuffer::<i64>::get(array)?;
+            reduce_impl(py, &buffer, callable, initial)
+        }
+        TypeCode::UInt8 => {
+            let buffer = PyBuffer::<u8>::get(array)?;
+            reduce_impl(py, &buffer, callable, initial)
+        }
+        TypeCode::UInt16 => {
+            let buffer = PyBuffer::<u16>::get(array)?;
+            reduce_impl(py, &buffer, callable, initial)
+        }
+        TypeCode::UInt32 => {
+            let buffer = PyBuffer::<u32>::get(array)?;
+            reduce_impl(py, &buffer, callable, initial)
+        }
+        TypeCode::UInt64 => {
+            let buffer = PyBuffer::<u64>::get(array)?;
+            reduce_impl(py, &buffer, callable, initial)
+        }
+        TypeCode::Float32 => {
+            let buffer = PyBuffer::<f32>::get(array)?;
+            reduce_impl(py, &buffer, callable, initial)
+        }
+        TypeCode::Float64 => {
+            let buffer = PyBuffer::<f64>::get(array)?;
+            reduce_impl(py, &buffer, callable, initial)
+        }
+    }
+}
+
 /// A Python module implemented in Rust.
 #[pymodule]
 fn _arrayops(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sum, m)?)?;
     m.add_function(wrap_pyfunction!(scale, m)?)?;
+    m.add_function(wrap_pyfunction!(map, m)?)?;
+    m.add_function(wrap_pyfunction!(map_inplace, m)?)?;
+    m.add_function(wrap_pyfunction!(filter, m)?)?;
+    m.add_function(wrap_pyfunction!(reduce, m)?)?;
     Ok(())
 }
 
@@ -691,6 +1004,23 @@ mod tests {
                 .unwrap();
             let result: i32 = sum(py, arr).unwrap().extract(py).unwrap();
             assert_eq!(result, (0..1000).sum::<i32>());
+        });
+    }
+
+    #[test]
+    fn test_module_initialization_with_new_functions() {
+        Python::with_gil(|py| {
+            let module = PyModule::new(py, "_arrayops").unwrap();
+            let result = _arrayops(py, module);
+            assert!(result.is_ok());
+            
+            // Verify all functions are registered
+            assert!(module.getattr("sum").is_ok());
+            assert!(module.getattr("scale").is_ok());
+            assert!(module.getattr("map").is_ok());
+            assert!(module.getattr("map_inplace").is_ok());
+            assert!(module.getattr("filter").is_ok());
+            assert!(module.getattr("reduce").is_ok());
         });
     }
 }

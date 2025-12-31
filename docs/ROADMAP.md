@@ -10,39 +10,34 @@ This document outlines the planned features and improvements for the `arrayops` 
 - [x] **Full test coverage** - 100% coverage for both Python and Rust code
 - [x] **Type stubs for mypy** - Complete type annotations for static type checking
 
-## 🚧 In Progress
-
-_No items currently in progress_
-
-## 📋 Planned Features
-
-### Phase 1: Additional Operations (High Priority)
-
-#### Map Operations
-- [ ] **`map(arr, fn) -> array`** - Apply function to each element, return new array
+### Phase 1: Additional Operations
+- [x] **`map(arr, fn) -> array`** - Apply function to each element, return new array
   - Support for Python callables (lambda, functions)
   - Type preservation (input type determines output type)
-  - Fast path for common operations (square, negate, abs)
   - Performance target: 10-50x faster than Python list comprehension
 
-- [ ] **`map_inplace(arr, fn) -> None`** - Apply function in-place
+- [x] **`map_inplace(arr, fn) -> None`** - Apply function in-place
   - Modify array elements without allocation
   - Same callable support as `map`
   - Performance target: 5-20x faster than Python loop
 
-#### Filter Operations
-- [ ] **`filter(arr, predicate) -> array`** - Return new array with filtered elements
+- [x] **`filter(arr, predicate) -> array`** - Return new array with filtered elements
   - Support for Python callable predicates
   - Preserve original array type
   - Handle empty results gracefully
   - Performance target: 10-30x faster than Python list comprehension
 
-#### Reduce Operations
-- [ ] **`reduce(arr, fn, initial=None) -> scalar`** - Fold array with binary function
+- [x] **`reduce(arr, fn, initial=None) -> scalar`** - Fold array with binary function
   - Support for Python callables
   - Optional initial value
   - Type inference for return value
   - Performance target: 10-40x faster than Python `functools.reduce`
+
+## 🚧 In Progress
+
+_No items currently in progress_
+
+## 📋 Planned Features
 
 ### Phase 2: Performance Optimizations (Medium Priority)
 
@@ -135,7 +130,7 @@ _No items currently in progress_
 ## 🗓️ Timeline
 
 ### Q1 2024
-- [ ] Complete Phase 1 (map, filter, reduce operations)
+- [x] Complete Phase 1 (map, filter, reduce operations)
 - [ ] Begin Phase 2 research (SIMD, parallel execution)
 
 ### Q2 2024
@@ -214,5 +209,5 @@ Priority will be given to:
 
 ---
 
-_Last updated: Based on README roadmap section_
+_Last updated: Phase 1 completed (map, map_inplace, filter, reduce operations implemented)_
 
