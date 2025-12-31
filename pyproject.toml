@@ -25,7 +25,7 @@ Documentation = "https://github.com/eddiethedean/arrayops#readme"
 
 [tool.maturin]
 module-name = "arrayops._arrayops"
-compatibility = "manylinux2014"
+compatibility = "manylinux_2_24"
 strip = true
 
 [tool.maturin.sdist]

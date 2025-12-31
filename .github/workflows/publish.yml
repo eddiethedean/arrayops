@@ -25,7 +25,7 @@ jobs:
             ghcr.io/pyo3/maturin:latest build \
             --release --out /io/dist \
             --interpreter /opt/python/cp312-cp312/bin/python \
-            --compatibility manylinux2014
+            --compatibility manylinux_2_24
 
       - name: Publish to PyPI
         env:
