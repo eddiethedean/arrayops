@@ -376,9 +376,9 @@ ao.scale(empty, 5.0)    # No error, array remains empty
 
 ## ⚡ Performance
 
-`ao` provides significant speedups over pure Python operations:
+`arrayops` provides significant speedups over pure Python operations:
 
-| Operation | Python | ao | Speedup |
+| Operation | Python | arrayops | Speedup |
 |-----------|--------|----------|---------|
 | Sum (1M ints) | ~50ms | ~0.5ms | 100x |
 | Scale (1M ints) | ~80ms | ~1.5ms | 50x |
@@ -402,10 +402,10 @@ start = time.perf_counter()
 python_sum = sum(arr)
 python_time = time.perf_counter() - start
 
-# ao sum
+# arrayops sum
 start = time.perf_counter()
-arrayops_sum = ao.sum(arr)
-arrayops_time = time.perf_counter() - start
+ao_sum = ao.sum(arr)
+ao_time = time.perf_counter() - start
 
 print(f"Python sum: {python_time*1000:.2f}ms")
 print(f"ao sum: {ao_time*1000:.2f}ms")
