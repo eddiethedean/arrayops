@@ -1,21 +1,21 @@
-use pyo3::prelude::*;
-use pyo3::buffer::{PyBuffer, Element};
+use pyo3::buffer::{Element, PyBuffer};
 use pyo3::exceptions::{PyTypeError, PyValueError};
+use pyo3::prelude::*;
 use pyo3::types::PyList;
 
 /// Supported array.array typecodes
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum TypeCode {
     // Signed integers
-    Int8,    // 'b'
-    Int16,   // 'h'
-    Int32,   // 'i'
-    Int64,   // 'l'
+    Int8,  // 'b'
+    Int16, // 'h'
+    Int32, // 'i'
+    Int64, // 'l'
     // Unsigned integers
-    UInt8,   // 'B'
-    UInt16,  // 'H'
-    UInt32,  // 'I'
-    UInt64,  // 'L'
+    UInt8,  // 'B'
+    UInt16, // 'H'
+    UInt32, // 'I'
+    UInt64, // 'L'
     // Floats
     Float32, // 'f'
     Float64, // 'd'
@@ -74,7 +74,7 @@ fn validate_array_array(array: &PyAny) -> PyResult<()> {
     let array_type = module.getattr("array")?;
     if !array.is_instance(array_type)? {
         return Err(PyTypeError::new_err(
-            "Expected array.array, got different type"
+            "Expected array.array, got different type",
         ));
     }
     Ok(())
@@ -91,8 +91,10 @@ fn sum_impl<T>(py: Python, buffer: &PyBuffer<T>) -> PyResult<T>
 where
     T: Element + Copy + Default + std::ops::Add<Output = T> + pyo3::ToPyObject,
 {
-    let slice = buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
-    
+    let slice = buffer
+        .as_slice(py)
+        .ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
+
     // TODO: Parallel sum optimization with rayon
     // Note: ReadOnlyCell<T> prevents direct parallel access. Future enhancement:
     // could extract chunks to Vec first, or use unsafe raw pointer access
@@ -101,8 +103,11 @@ where
         // Parallel optimization disabled until proper thread-safe access pattern is implemented
         // See: https://github.com/PyO3/pyo3/issues for buffer API improvements
     }
-    
-    Ok(slice.iter().map(|cell| cell.get()).fold(T::default(), |acc, x| acc + x))
+
+    Ok(slice
+        .iter()
+        .map(|cell| cell.get())
+        .fold(T::default(), |acc, x| acc + x))
 }
 
 // Generic scale implementation (in-place)
@@ -112,7 +117,9 @@ where
     T: Element + Copy + std::ops::Mul<F, Output = T>,
     F: Copy,
 {
-    let slice = buffer.as_mut_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get mutable buffer slice"))?;
+    let slice = buffer
+        .as_mut_slice(py)
+        .ok_or_else(|| PyTypeError::new_err("Failed to get mutable buffer slice"))?;
     for item in slice.iter() {
         item.set(item.get() * factor);
     }
@@ -124,7 +131,7 @@ where
 fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
     validate_array_array(array)?;
     let typecode = get_typecode(array)?;
-    
+
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
         match typecode {
@@ -140,7 +147,7 @@ fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
             TypeCode::Float64 => return Ok(0.0f64.to_object(py)),
         }
     }
-    
+
     match typecode {
         TypeCode::Int8 => {
             let buffer = PyBuffer::<i8>::get(array)?;
@@ -200,12 +207,12 @@ fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
 fn scale(py: Python, array: &PyAny, factor: f64) -> PyResult<()> {
     validate_array_array(array)?;
     let typecode = get_typecode(array)?;
-    
+
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
         return Ok(());
     }
-    
+
     match typecode {
         TypeCode::Int8 => {
             let mut buffer = PyBuffer::<i8>::get(array)?;
@@ -251,24 +258,31 @@ fn scale(py: Python, array: &PyAny, factor: f64) -> PyResult<()> {
 }
 
 // Generic map implementation (returns new array)
-fn map_impl<T>(py: Python, buffer: &PyBuffer<T>, callable: &PyAny, typecode: TypeCode) -> PyResult<PyObject>
+fn map_impl<T>(
+    py: Python,
+    buffer: &PyBuffer<T>,
+    callable: &PyAny,
+    typecode: TypeCode,
+) -> PyResult<PyObject>
 where
     T: Element + Copy + pyo3::ToPyObject,
 {
-    let slice = buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
-    
+    let slice = buffer
+        .as_slice(py)
+        .ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
+
     let array_module = PyModule::import(py, "array")?;
     let array_type = array_module.getattr("array")?;
     let typecode_char = typecode.as_char();
     let result_array = array_type.call1((typecode_char, PyList::empty(py)))?;
-    
+
     for cell in slice.iter() {
         let value = cell.get();
         let value_obj = value.to_object(py);
         let result = callable.call1((value_obj,))?;
         result_array.call_method1("append", (result,))?;
     }
-    
+
     Ok(result_array.to_object(py))
 }
 
@@ -278,15 +292,17 @@ fn map(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<PyObject> {
     validate_array_array(array)?;
     let typecode = get_typecode(array)?;
     let callable = r#fn.as_ref(py);
-    
+
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
         let array_module = PyModule::import(py, "array")?;
         let array_type = array_module.getattr("array")?;
         let typecode_char = typecode.as_char();
-        return Ok(array_type.call1((typecode_char, PyList::empty(py)))?.to_object(py));
+        return Ok(array_type
+            .call1((typecode_char, PyList::empty(py)))?
+            .to_object(py));
     }
-    
+
     match typecode {
         TypeCode::Int8 => {
             let buffer = PyBuffer::<i8>::get(array)?;
@@ -336,8 +352,10 @@ fn map_inplace_impl<T>(py: Python, buffer: &mut PyBuffer<T>, callable: &PyAny) -
 where
     T: Element + Copy + pyo3::ToPyObject + for<'a> pyo3::FromPyObject<'a>,
 {
-    let slice = buffer.as_mut_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get mutable buffer slice"))?;
-    
+    let slice = buffer
+        .as_mut_slice(py)
+        .ok_or_else(|| PyTypeError::new_err("Failed to get mutable buffer slice"))?;
+
     for item in slice.iter() {
         let value = item.get();
         let value_obj = value.to_object(py);
@@ -345,7 +363,7 @@ where
         let result_value: T = result.extract()?;
         item.set(result_value);
     }
-    
+
     Ok(())
 }
 
@@ -355,12 +373,12 @@ fn map_inplace(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<()> {
     validate_array_array(array)?;
     let typecode = get_typecode(array)?;
     let callable = r#fn.as_ref(py);
-    
+
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
         return Ok(());
     }
-    
+
     match typecode {
         TypeCode::Int8 => {
             let mut buffer = PyBuffer::<i8>::get(array)?;
@@ -406,17 +424,24 @@ fn map_inplace(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<()> {
 }
 
 // Generic filter implementation
-fn filter_impl<T>(py: Python, buffer: &PyBuffer<T>, predicate: &PyAny, typecode: TypeCode) -> PyResult<PyObject>
+fn filter_impl<T>(
+    py: Python,
+    buffer: &PyBuffer<T>,
+    predicate: &PyAny,
+    typecode: TypeCode,
+) -> PyResult<PyObject>
 where
     T: Element + Copy + pyo3::ToPyObject,
 {
-    let slice = buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
-    
+    let slice = buffer
+        .as_slice(py)
+        .ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
+
     let array_module = PyModule::import(py, "array")?;
     let array_type = array_module.getattr("array")?;
     let typecode_char = typecode.as_char();
     let result_array = array_type.call1((typecode_char, PyList::empty(py)))?;
-    
+
     for cell in slice.iter() {
         let value = cell.get();
         let value_obj = value.to_object(py);
@@ -426,7 +451,7 @@ where
             result_array.call_method1("append", (value_obj,))?;
         }
     }
-    
+
     Ok(result_array.to_object(py))
 }
 
@@ -436,15 +461,17 @@ fn filter(py: Python, array: &PyAny, predicate: PyObject) -> PyResult<PyObject> 
     validate_array_array(array)?;
     let typecode = get_typecode(array)?;
     let callable = predicate.as_ref(py);
-    
+
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
         let array_module = PyModule::import(py, "array")?;
         let array_type = array_module.getattr("array")?;
         let typecode_char = typecode.as_char();
-        return Ok(array_type.call1((typecode_char, PyList::empty(py)))?.to_object(py));
+        return Ok(array_type
+            .call1((typecode_char, PyList::empty(py)))?
+            .to_object(py));
     }
-    
+
     match typecode {
         TypeCode::Int8 => {
             let buffer = PyBuffer::<i8>::get(array)?;
@@ -490,21 +517,30 @@ fn filter(py: Python, array: &PyAny, predicate: PyObject) -> PyResult<PyObject> 
 }
 
 // Generic reduce implementation
-fn reduce_impl<T>(py: Python, buffer: &PyBuffer<T>, r#fn: &PyAny, initial: Option<PyObject>) -> PyResult<PyObject>
+fn reduce_impl<T>(
+    py: Python,
+    buffer: &PyBuffer<T>,
+    r#fn: &PyAny,
+    initial: Option<PyObject>,
+) -> PyResult<PyObject>
 where
     T: Element + Copy + pyo3::ToPyObject,
 {
-    let slice = buffer.as_slice(py).ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
-    
+    let slice = buffer
+        .as_slice(py)
+        .ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
+
     // Note: Empty check is now done in reduce() before getting the buffer,
     // but keep this as a safety check in case the buffer is somehow empty
     if slice.is_empty() {
         return match initial {
             Some(init) => Ok(init),
-            None => Err(PyValueError::new_err("reduce() of empty array with no initial value")),
+            None => Err(PyValueError::new_err(
+                "reduce() of empty array with no initial value",
+            )),
         };
     }
-    
+
     let (mut acc, start_idx) = match initial {
         Some(init) => (init, 0),
         None => {
@@ -518,26 +554,33 @@ where
         let result = r#fn.call1((acc, value_obj))?;
         acc = result.to_object(py);
     }
-    
+
     Ok(acc)
 }
 
 /// Reduce operation for array.array
 #[pyfunction]
-fn reduce(py: Python, array: &PyAny, r#fn: PyObject, initial: Option<PyObject>) -> PyResult<PyObject> {
+fn reduce(
+    py: Python,
+    array: &PyAny,
+    r#fn: PyObject,
+    initial: Option<PyObject>,
+) -> PyResult<PyObject> {
     validate_array_array(array)?;
     let typecode = get_typecode(array)?;
     let callable = r#fn.as_ref(py);
-    
+
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     let array_len = get_array_len(array)?;
     if array_len == 0 {
         return match initial {
             Some(init) => Ok(init),
-            None => Err(PyValueError::new_err("reduce() of empty array with no initial value")),
+            None => Err(PyValueError::new_err(
+                "reduce() of empty array with no initial value",
+            )),
         };
     }
-    
+
     match typecode {
         TypeCode::Int8 => {
             let buffer = PyBuffer::<i8>::get(array)?;
@@ -597,7 +640,7 @@ fn _arrayops(_py: Python, m: &PyModule) -> PyResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pyo3::types::{PyList, PyDict};
+    use pyo3::types::{PyDict, PyList};
 
     #[test]
     fn test_typecode_parsing() {
@@ -740,7 +783,7 @@ mod tests {
             ('f', TypeCode::Float32),
             ('d', TypeCode::Float64),
         ];
-        
+
         for (code, expected) in test_cases {
             assert_eq!(TypeCode::from_char(code).unwrap(), expected);
             assert_eq!(expected.as_char(), code);
@@ -752,7 +795,11 @@ mod tests {
     fn test_typecode_errors() {
         let invalid_codes = vec!['x', 'X', 'c', 'C', 'u', 'U', 'q', 'Q', ' ', '1', 'a'];
         for code in invalid_codes {
-            assert!(TypeCode::from_char(code).is_err(), "Code '{}' should fail", code);
+            assert!(
+                TypeCode::from_char(code).is_err(),
+                "Code '{}' should fail",
+                code
+            );
         }
     }
 
@@ -762,44 +809,60 @@ mod tests {
         Python::with_gil(|py| {
             let array_module = PyModule::import(py, "array").unwrap();
             let array_type = array_module.getattr("array").unwrap();
-            
+
             // Test Int8
-            let arr = array_type.call1(("b", PyList::new(py, &[-1i8, 0, 1]))).unwrap();
+            let arr = array_type
+                .call1(("b", PyList::new(py, &[-1i8, 0, 1])))
+                .unwrap();
             let result: i8 = sum(py, arr).unwrap().extract(py).unwrap();
             assert_eq!(result, 0i8);
-            
+
             // Test UInt8
-            let arr = array_type.call1(("B", PyList::new(py, &[1u8, 2, 3]))).unwrap();
+            let arr = array_type
+                .call1(("B", PyList::new(py, &[1u8, 2, 3])))
+                .unwrap();
             let result: u8 = sum(py, arr).unwrap().extract(py).unwrap();
             assert_eq!(result, 6u8);
-            
+
             // Test Int16
-            let arr = array_type.call1(("h", PyList::new(py, &[-10i16, 0, 10]))).unwrap();
+            let arr = array_type
+                .call1(("h", PyList::new(py, &[-10i16, 0, 10])))
+                .unwrap();
             let result: i16 = sum(py, arr).unwrap().extract(py).unwrap();
             assert_eq!(result, 0i16);
-            
+
             // Test UInt16
-            let arr = array_type.call1(("H", PyList::new(py, &[100u16, 200]))).unwrap();
+            let arr = array_type
+                .call1(("H", PyList::new(py, &[100u16, 200])))
+                .unwrap();
             let result: u16 = sum(py, arr).unwrap().extract(py).unwrap();
             assert_eq!(result, 300u16);
-            
+
             // Test Int32
-            let arr = array_type.call1(("i", PyList::new(py, &[1i32, 2, 3]))).unwrap();
+            let arr = array_type
+                .call1(("i", PyList::new(py, &[1i32, 2, 3])))
+                .unwrap();
             let result: i32 = sum(py, arr).unwrap().extract(py).unwrap();
             assert_eq!(result, 6i32);
-            
+
             // Test UInt32
-            let arr = array_type.call1(("I", PyList::new(py, &[1u32, 2, 3]))).unwrap();
+            let arr = array_type
+                .call1(("I", PyList::new(py, &[1u32, 2, 3])))
+                .unwrap();
             let result: u32 = sum(py, arr).unwrap().extract(py).unwrap();
             assert_eq!(result, 6u32);
-            
+
             // Test Int64
-            let arr = array_type.call1(("l", PyList::new(py, &[1000i64, 2000]))).unwrap();
+            let arr = array_type
+                .call1(("l", PyList::new(py, &[1000i64, 2000])))
+                .unwrap();
             let result: i64 = sum(py, arr).unwrap().extract(py).unwrap();
             assert_eq!(result, 3000i64);
-            
+
             // Test UInt64
-            let arr = array_type.call1(("L", PyList::new(py, &[1000u64, 2000]))).unwrap();
+            let arr = array_type
+                .call1(("L", PyList::new(py, &[1000u64, 2000])))
+                .unwrap();
             let result: u64 = sum(py, arr).unwrap().extract(py).unwrap();
             assert_eq!(result, 3000u64);
         });
@@ -810,14 +873,14 @@ mod tests {
         Python::with_gil(|py| {
             let array_module = PyModule::import(py, "array").unwrap();
             let array_type = array_module.getattr("array").unwrap();
-            
+
             // Test f32
             let arr = array_type
                 .call1(("f", PyList::new(py, &[1.5f32, 2.5, 3.5])))
                 .unwrap();
             let result: f32 = sum(py, arr).unwrap().extract(py).unwrap();
             assert!((result - 7.5).abs() < 0.001);
-            
+
             // Test f64
             let arr = array_type
                 .call1(("d", PyList::new(py, &[1.5f64, 2.5, 3.5])))
@@ -833,65 +896,81 @@ mod tests {
         Python::with_gil(|py| {
             let array_module = PyModule::import(py, "array").unwrap();
             let array_type = array_module.getattr("array").unwrap();
-            
+
             // Test Int8
-            let arr = array_type.call1(("b", PyList::new(py, &[1i8, 2, 3]))).unwrap();
+            let arr = array_type
+                .call1(("b", PyList::new(py, &[1i8, 2, 3])))
+                .unwrap();
             scale(py, arr, 2.0).unwrap();
             let buffer = PyBuffer::<i8>::get(arr).unwrap();
             let slice = buffer.as_slice(py).unwrap();
             let values: Vec<i8> = slice.iter().map(|cell| cell.get()).collect();
             assert_eq!(values, vec![2i8, 4, 6]);
-            
+
             // Test UInt8
-            let arr = array_type.call1(("B", PyList::new(py, &[1u8, 2, 3]))).unwrap();
+            let arr = array_type
+                .call1(("B", PyList::new(py, &[1u8, 2, 3])))
+                .unwrap();
             scale(py, arr, 2.0).unwrap();
             let buffer = PyBuffer::<u8>::get(arr).unwrap();
             let slice = buffer.as_slice(py).unwrap();
             let values: Vec<u8> = slice.iter().map(|cell| cell.get()).collect();
             assert_eq!(values, vec![2u8, 4, 6]);
-            
+
             // Test Int16
-            let arr = array_type.call1(("h", PyList::new(py, &[1i16, 2, 3]))).unwrap();
+            let arr = array_type
+                .call1(("h", PyList::new(py, &[1i16, 2, 3])))
+                .unwrap();
             scale(py, arr, 2.0).unwrap();
             let buffer = PyBuffer::<i16>::get(arr).unwrap();
             let slice = buffer.as_slice(py).unwrap();
             let values: Vec<i16> = slice.iter().map(|cell| cell.get()).collect();
             assert_eq!(values, vec![2i16, 4, 6]);
-            
+
             // Test UInt16
-            let arr = array_type.call1(("H", PyList::new(py, &[1u16, 2, 3]))).unwrap();
+            let arr = array_type
+                .call1(("H", PyList::new(py, &[1u16, 2, 3])))
+                .unwrap();
             scale(py, arr, 2.0).unwrap();
             let buffer = PyBuffer::<u16>::get(arr).unwrap();
             let slice = buffer.as_slice(py).unwrap();
             let values: Vec<u16> = slice.iter().map(|cell| cell.get()).collect();
             assert_eq!(values, vec![2u16, 4, 6]);
-            
+
             // Test Int32
-            let arr = array_type.call1(("i", PyList::new(py, &[1i32, 2, 3]))).unwrap();
+            let arr = array_type
+                .call1(("i", PyList::new(py, &[1i32, 2, 3])))
+                .unwrap();
             scale(py, arr, 2.0).unwrap();
             let buffer = PyBuffer::<i32>::get(arr).unwrap();
             let slice = buffer.as_slice(py).unwrap();
             let values: Vec<i32> = slice.iter().map(|cell| cell.get()).collect();
             assert_eq!(values, vec![2i32, 4, 6]);
-            
+
             // Test UInt32
-            let arr = array_type.call1(("I", PyList::new(py, &[1u32, 2, 3]))).unwrap();
+            let arr = array_type
+                .call1(("I", PyList::new(py, &[1u32, 2, 3])))
+                .unwrap();
             scale(py, arr, 2.0).unwrap();
             let buffer = PyBuffer::<u32>::get(arr).unwrap();
             let slice = buffer.as_slice(py).unwrap();
             let values: Vec<u32> = slice.iter().map(|cell| cell.get()).collect();
             assert_eq!(values, vec![2u32, 4, 6]);
-            
+
             // Test Int64
-            let arr = array_type.call1(("l", PyList::new(py, &[1i64, 2, 3]))).unwrap();
+            let arr = array_type
+                .call1(("l", PyList::new(py, &[1i64, 2, 3])))
+                .unwrap();
             scale(py, arr, 2.0).unwrap();
             let buffer = PyBuffer::<i64>::get(arr).unwrap();
             let slice = buffer.as_slice(py).unwrap();
             let values: Vec<i64> = slice.iter().map(|cell| cell.get()).collect();
             assert_eq!(values, vec![2i64, 4, 6]);
-            
+
             // Test UInt64
-            let arr = array_type.call1(("L", PyList::new(py, &[1u64, 2, 3]))).unwrap();
+            let arr = array_type
+                .call1(("L", PyList::new(py, &[1u64, 2, 3])))
+                .unwrap();
             scale(py, arr, 2.0).unwrap();
             let buffer = PyBuffer::<u64>::get(arr).unwrap();
             let slice = buffer.as_slice(py).unwrap();
@@ -905,7 +984,7 @@ mod tests {
         Python::with_gil(|py| {
             let array_module = PyModule::import(py, "array").unwrap();
             let array_type = array_module.getattr("array").unwrap();
-            
+
             // Test f32
             let arr = array_type
                 .call1(("f", PyList::new(py, &[1.0f32, 2.0, 3.0])))
@@ -917,7 +996,7 @@ mod tests {
             assert!((values[0] - 2.5).abs() < 0.001);
             assert!((values[1] - 5.0).abs() < 0.001);
             assert!((values[2] - 7.5).abs() < 0.001);
-            
+
             // Test f64
             let arr = array_type
                 .call1(("d", PyList::new(py, &[1.0f64, 2.0, 3.0])))
@@ -990,9 +1069,7 @@ mod tests {
         Python::with_gil(|py| {
             let array_module = PyModule::import(py, "array").unwrap();
             let array_type = array_module.getattr("array").unwrap();
-            let arr = array_type
-                .call1(("i", PyList::new(py, &[42])))
-                .unwrap();
+            let arr = array_type.call1(("i", PyList::new(py, &[42]))).unwrap();
             let result: i32 = sum(py, arr).unwrap().extract(py).unwrap();
             assert_eq!(result, 42);
         });
@@ -1010,10 +1087,16 @@ mod tests {
                 if let Ok(obj) = globals.get_item("obj") {
                     if let Some(obj) = obj {
                         let result = get_typecode(obj);
-                        assert!(result.is_err(), "Should fail for typecode string length != 1");
+                        assert!(
+                            result.is_err(),
+                            "Should fail for typecode string length != 1"
+                        );
                         let err_msg = result.unwrap_err().to_string();
-                        assert!(err_msg.contains("Invalid typecode"), 
-                            "Error message was: {}", err_msg);
+                        assert!(
+                            err_msg.contains("Invalid typecode"),
+                            "Error message was: {}",
+                            err_msg
+                        );
                         return;
                     }
                 }
@@ -1033,7 +1116,7 @@ mod tests {
             let module = PyModule::new(py, "_arrayops").unwrap();
             let result = _arrayops(py, module);
             assert!(result.is_ok());
-            
+
             // Verify functions are registered
             assert!(module.getattr("sum").is_ok());
             assert!(module.getattr("scale").is_ok());
@@ -1046,9 +1129,7 @@ mod tests {
             let array_module = PyModule::import(py, "array").unwrap();
             let array_type = array_module.getattr("array").unwrap();
             let values: Vec<i32> = (0..1000).collect();
-            let arr = array_type
-                .call1(("i", PyList::new(py, &values)))
-                .unwrap();
+            let arr = array_type.call1(("i", PyList::new(py, &values))).unwrap();
             let result: i32 = sum(py, arr).unwrap().extract(py).unwrap();
             assert_eq!(result, (0..1000).sum::<i32>());
         });
@@ -1060,7 +1141,7 @@ mod tests {
             let module = PyModule::new(py, "_arrayops").unwrap();
             let result = _arrayops(py, module);
             assert!(result.is_ok());
-            
+
             // Verify all functions are registered
             assert!(module.getattr("sum").is_ok());
             assert!(module.getattr("scale").is_ok());
