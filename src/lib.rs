@@ -257,12 +257,10 @@ fn validate_for_operation(obj: &PyAny, input_type: InputType, in_place: bool) ->
         InputType::NumPyArray => validate_numpy_array(obj)?,
         InputType::MemoryView => {
             validate_memoryview(obj)?;
-            if in_place {
-                if !is_memoryview_writable(obj)? {
-                    return Err(PyValueError::new_err(
-                        "memoryview is read-only; in-place operations require writable memoryview",
-                    ));
-                }
+            if in_place && !is_memoryview_writable(obj)? {
+                return Err(PyValueError::new_err(
+                    "memoryview is read-only; in-place operations require writable memoryview",
+                ));
             }
         }
     }
