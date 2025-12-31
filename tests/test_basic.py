@@ -6,6 +6,7 @@ import sys
 
 try:
     import numpy as np
+
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
@@ -1069,7 +1070,9 @@ class TestNumPyInterop:
         result = arrayops.map(arr, lambda x: x * 2)
         assert isinstance(result, np.ndarray)
         assert result.dtype == np.int32
-        np.testing.assert_array_equal(result, np.array([2, 4, 6, 8, 10], dtype=np.int32))
+        np.testing.assert_array_equal(
+            result, np.array([2, 4, 6, 8, 10], dtype=np.int32)
+        )
 
     def test_filter_numpy_returns_numpy(self):
         """Test filter with numpy array returns numpy array."""

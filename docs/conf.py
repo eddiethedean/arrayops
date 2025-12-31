@@ -24,6 +24,7 @@ author = "Odos Matthews"
 # Try to get version from package, fallback to default
 try:
     from arrayops import __version__
+
     version = __version__
     release = __version__
 except ImportError:

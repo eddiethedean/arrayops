@@ -81,7 +81,9 @@ def filter(
     ...
 
 def reduce(
-    arr: _ArrayLike, fn: Callable[[Any, Union[int, float]], Any], initial: Optional[Any] = None
+    arr: _ArrayLike,
+    fn: Callable[[Any, Union[int, float]], Any],
+    initial: Optional[Any] = None,
 ) -> Any:
     """
     Fold array with binary function.
