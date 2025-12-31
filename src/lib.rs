@@ -132,7 +132,9 @@ fn should_parallelize(len: usize, threshold: usize) -> bool {
 }
 
 // SIMD thresholds - minimum array size to use SIMD
+// Reserved for future SIMD implementation
 #[cfg(feature = "simd")]
+#[allow(dead_code)]
 const SIMD_THRESHOLD: usize = 32;
 
 // SIMD optimization infrastructure
