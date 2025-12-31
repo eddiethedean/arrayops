@@ -108,15 +108,16 @@ fn get_numpy_typecode(arr: &PyAny) -> PyResult<TypeCode> {
 /// Get typecode from memoryview format string
 fn get_memoryview_typecode(mv: &PyAny) -> PyResult<TypeCode> {
     let format_str = mv.getattr("format")?.str()?.to_string_lossy();
-    
+
     // Parse format string (handle endianness: '<i4', '>f8', 'i', 'I', etc.)
     // Remove endianness prefix if present (<, >, =, !)
     let cleaned_format = format_str.trim_start_matches(['<', '>', '=', '!']);
-    
+
     // Extract the base type character (first character after endianness)
-    let base_char = cleaned_format.chars().next().ok_or_else(|| {
-        PyTypeError::new_err("Could not parse memoryview format string")
-    })?;
+    let base_char = cleaned_format
+        .chars()
+        .next()
+        .ok_or_else(|| PyTypeError::new_err("Could not parse memoryview format string"))?;
 
     // Map memoryview format to TypeCode
     // Standard formats: 'b'=signed char, 'B'=unsigned char, 'h'=short, 'H'=unsigned short
