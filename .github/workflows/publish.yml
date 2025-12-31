@@ -6,8 +6,88 @@ on:
       - 'v*.*.*'  # Triggers on version tags like v0.1.0, v1.0.0, etc.
 
 jobs:
-  build-and-publish:
-    runs-on: ubuntu-latest
+  build-wheels:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux builds (manylinux_2_24)
+          - os: ubuntu-latest
+            python-version: '3.8'
+            python-tag: 'cp38'
+            build-platform: linux
+          - os: ubuntu-latest
+            python-version: '3.9'
+            python-tag: 'cp39'
+            build-platform: linux
+          - os: ubuntu-latest
+            python-version: '3.10'
+            python-tag: 'cp310'
+            build-platform: linux
+          - os: ubuntu-latest
+            python-version: '3.11'
+            python-tag: 'cp311'
+            build-platform: linux
+          - os: ubuntu-latest
+            python-version: '3.12'
+            python-tag: 'cp312'
+            build-platform: linux
+          - os: ubuntu-latest
+            python-version: '3.13'
+            python-tag: 'cp313'
+            build-platform: linux
+          # macOS builds (universal2 wheels work on both Intel and ARM)
+          - os: macos-14
+            python-version: '3.8'
+            python-tag: 'cp38'
+            build-platform: macos
+          - os: macos-14
+            python-version: '3.9'
+            python-tag: 'cp39'
+            build-platform: macos
+          - os: macos-14
+            python-version: '3.10'
+            python-tag: 'cp310'
+            build-platform: macos
+          - os: macos-14
+            python-version: '3.11'
+            python-tag: 'cp311'
+            build-platform: macos
+          - os: macos-14
+            python-version: '3.12'
+            python-tag: 'cp312'
+            build-platform: macos
+          - os: macos-14
+            python-version: '3.13'
+            python-tag: 'cp313'
+            build-platform: macos
+          # Windows AMD64 builds
+          - os: windows-latest
+            python-version: '3.8'
+            python-tag: 'cp38'
+            build-platform: windows
+          - os: windows-latest
+            python-version: '3.9'
+            python-tag: 'cp39'
+            build-platform: windows
+          - os: windows-latest
+            python-version: '3.10'
+            python-tag: 'cp310'
+            build-platform: windows
+          - os: windows-latest
+            python-version: '3.11'
+            python-tag: 'cp311'
+            build-platform: windows
+          - os: windows-latest
+            python-version: '3.12'
+            python-tag: 'cp312'
+            build-platform: windows
+          - os: windows-latest
+            python-version: '3.13'
+            python-tag: 'cp313'
+            build-platform: windows
+
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -15,17 +95,54 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
 
-      - name: Build package with maturin (manylinux)
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Build Linux wheels (manylinux)
+        if: matrix.build-platform == 'linux'
         run: |
           docker run --rm -v "$PWD":/io \
             -w /io \
-            -e PYO3_PYTHON=/opt/python/cp312-cp312/bin/python \
+            -e PYO3_PYTHON=/opt/python/${{ matrix.python-tag }}-${{ matrix.python-tag }}/bin/python \
             ghcr.io/pyo3/maturin:latest build \
             --release --out /io/dist \
-            --interpreter /opt/python/cp312-cp312/bin/python \
+            --interpreter /opt/python/${{ matrix.python-tag }}-${{ matrix.python-tag }}/bin/python \
             --compatibility manylinux_2_24
+
+      - name: Build macOS wheels (universal2)
+        if: matrix.build-platform == 'macos'
+        run: |
+          pip install maturin
+          maturin build --release --out dist --interpreter python --universal2
+
+      - name: Build Windows wheels
+        if: matrix.build-platform == 'windows'
+        run: |
+          pip install maturin
+          maturin build --release --out dist --interpreter python
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.build-platform }}-${{ matrix.python-tag }}
+          path: dist/*.whl
+          if-no-files-found: error
+
+  publish:
+    needs: build-wheels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
 
       - name: Publish to PyPI
         env:
@@ -33,5 +150,4 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           pip install twine
-          twine upload dist/*
-
+          twine upload dist/*.whl
