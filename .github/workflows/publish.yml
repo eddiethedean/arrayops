@@ -28,8 +28,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install maturin
 
-      - name: Build package with maturin
-        run: maturin build --release --out dist
+      - name: Build package with maturin (manylinux)
+        run: maturin build --release --out dist --manylinux manylinux2014
 
       - name: Publish to PyPI
         env:
