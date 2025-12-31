@@ -4,7 +4,7 @@
 
 **Rust-backed acceleration for Python's `array.array` type**
 
-[![PyPI](https://img.shields.io/pypi/v/ao.svg)](https://pypi.org/project/arrayops/)
+[![PyPI](https://img.shields.io/pypi/v/arrayops.svg)](https://pypi.org/project/arrayops/)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Rust](https://img.shields.io/badge/rust-1.75+-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
