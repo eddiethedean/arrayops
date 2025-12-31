@@ -5,7 +5,7 @@ Welcome to arrayops Documentation
 
 **Rust-backed acceleration for Python's ``array.array`` type**
 
-.. image:: https://img.shields.io/pypi/v/arrayops.svg
+.. image:: https://img.shields.io/pypi/v/ao.svg
    :target: https://pypi.org/project/arrayops/
    :alt: PyPI version
 
@@ -78,15 +78,15 @@ Quick Start
    data = array.array('i', [1, 2, 3, 4, 5])
 
    # Fast sum operation
-   total = arrayops.sum(data)
+   total = ao.sum(data)
    print(total)  # 15
 
    # In-place scaling
-   arrayops.scale(data, 2.0)
+   ao.scale(data, 2.0)
    print(list(data))  # [2, 4, 6, 8, 10]
 
    # Map operation (returns new array)
-   doubled = arrayops.map(data, lambda x: x * 2)
+   doubled = ao.map(data, lambda x: x * 2)
    print(list(doubled))  # [4, 8, 12, 16, 20]
 
 Installation

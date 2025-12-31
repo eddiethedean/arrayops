@@ -53,23 +53,23 @@ Compute the sum of all elements in an array.
 **Example:**
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Integer array
 arr = array.array('i', [1, 2, 3, 4, 5])
-result = arrayops.sum(arr)
+result = ao.sum(arr)
 print(result)  # 15
 print(type(result))  # <class 'int'>
 
 # Float array
 farr = array.array('f', [1.5, 2.5, 3.5])
-result = arrayops.sum(farr)
+result = ao.sum(farr)
 print(result)  # 7.5
 print(type(result))  # <class 'float'>
 
 # Empty array
 empty = array.array('i', [])
-result = arrayops.sum(empty)
+result = ao.sum(empty)
 print(result)  # 0
 ```
 
@@ -109,26 +109,26 @@ Scale all elements of an array in-place by a factor.
 **Example:**
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Integer array
 arr = array.array('i', [1, 2, 3, 4, 5])
-arrayops.scale(arr, 2.0)
+ao.scale(arr, 2.0)
 print(list(arr))  # [2, 4, 6, 8, 10]
 
 # Float array
 farr = array.array('f', [1.0, 2.0, 3.0])
-arrayops.scale(farr, 1.5)
+ao.scale(farr, 1.5)
 print(list(farr))  # [1.5, 3.0, 4.5]
 
 # Negative factor
 arr = array.array('i', [1, 2, 3])
-arrayops.scale(arr, -1.0)
+ao.scale(arr, -1.0)
 print(list(arr))  # [-1, -2, -3]
 
 # Zero factor
 arr = array.array('i', [1, 2, 3])
-arrayops.scale(arr, 0.0)
+ao.scale(arr, 0.0)
 print(list(arr))  # [0, 0, 0]
 ```
 
@@ -167,23 +167,23 @@ Apply a function to each element, returning a new array.
 **Example:**
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Double each element
 arr = array.array('i', [1, 2, 3, 4, 5])
-doubled = arrayops.map(arr, lambda x: x * 2)
+doubled = ao.map(arr, lambda x: x * 2)
 print(list(doubled))  # [2, 4, 6, 8, 10]
 
 # Using named function
 def square(x):
     return x * x
 
-squared = arrayops.map(arr, square)
+squared = ao.map(arr, square)
 print(list(squared))  # [1, 4, 9, 16, 25]
 
 # Float arrays
 farr = array.array('f', [1.5, 2.5, 3.5])
-halved = arrayops.map(farr, lambda x: x / 2.0)
+halved = ao.map(farr, lambda x: x / 2.0)
 print(list(halved))  # [0.75, 1.25, 1.75]
 ```
 
@@ -222,18 +222,18 @@ Apply a function to each element in-place.
 **Example:**
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Double each element in-place
 arr = array.array('i', [1, 2, 3, 4, 5])
-arrayops.map_inplace(arr, lambda x: x * 2)
+ao.map_inplace(arr, lambda x: x * 2)
 print(list(arr))  # [2, 4, 6, 8, 10]
 
 # Square in-place
 def square(x):
     return x * x
 
-arrayops.map_inplace(arr, square)
+ao.map_inplace(arr, square)
 print(list(arr))  # [4, 16, 36, 64, 100]
 ```
 
@@ -272,15 +272,15 @@ Filter elements using a predicate function, returning a new array.
 **Example:**
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Filter even numbers
 arr = array.array('i', [1, 2, 3, 4, 5, 6])
-evens = arrayops.filter(arr, lambda x: x % 2 == 0)
+evens = ao.filter(arr, lambda x: x % 2 == 0)
 print(list(evens))  # [2, 4, 6]
 
 # Filter values greater than threshold
-large = arrayops.filter(arr, lambda x: x > 3)
+large = ao.filter(arr, lambda x: x > 3)
 print(list(large))  # [4, 5, 6]
 
 # Filter with named function
@@ -288,7 +288,7 @@ def is_positive(x):
     return x > 0
 
 arr_neg = array.array('i', [-2, -1, 0, 1, 2])
-positives = arrayops.filter(arr_neg, is_positive)
+positives = ao.filter(arr_neg, is_positive)
 print(list(positives))  # [1, 2]
 ```
 
@@ -327,33 +327,33 @@ Reduce array to a single value using a binary function.
 **Example:**
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 arr = array.array('i', [1, 2, 3, 4, 5])
 
 # Sum using reduce
-total = arrayops.reduce(arr, lambda acc, x: acc + x)
+total = ao.reduce(arr, lambda acc, x: acc + x)
 print(total)  # 15
 
 # Product with initial value
-product = arrayops.reduce(arr, lambda acc, x: acc * x, initial=1)
+product = ao.reduce(arr, lambda acc, x: acc * x, initial=1)
 print(product)  # 120
 
 # Maximum value (no initial)
-maximum = arrayops.reduce(arr, lambda acc, x: acc if acc > x else x)
+maximum = ao.reduce(arr, lambda acc, x: acc if acc > x else x)
 print(maximum)  # 5
 
 # Minimum with initial
-minimum = arrayops.reduce(arr, lambda acc, x: acc if acc < x else x, initial=100)
+minimum = ao.reduce(arr, lambda acc, x: acc if acc < x else x, initial=100)
 print(minimum)  # 1
 
 # Reduce to string (different return type)
-result = arrayops.reduce(arr, lambda acc, x: f"{acc}+{x}", initial="0")
+result = ao.reduce(arr, lambda acc, x: f"{acc}+{x}", initial="0")
 print(result)  # "0+1+2+3+4+5"
 
 # Empty array requires initial
 empty = array.array('i', [])
-total = arrayops.reduce(empty, lambda acc, x: acc + x, initial=0)
+total = ao.reduce(empty, lambda acc, x: acc + x, initial=0)
 print(total)  # 0
 ```
 
@@ -369,32 +369,32 @@ All functions provide clear, descriptive error messages:
 
 ```python
 import array
-import arrayops
+import arrayops as ao
 
 # Wrong type
 try:
-    arrayops.sum([1, 2, 3])  # TypeError: Expected array.array
+    ao.sum([1, 2, 3])  # TypeError: Expected array.array
 except TypeError as e:
     print(e)
 
 # Unsupported typecode
 try:
     arr = array.array('c', b'abc')  # Character array
-    arrayops.sum(arr)  # TypeError: Unsupported typecode: 'c'
+    ao.sum(arr)  # TypeError: Unsupported typecode: 'c'
 except TypeError as e:
     print(e)
 
 # Non-callable function
 try:
     arr = array.array('i', [1, 2, 3])
-    arrayops.map(arr, "not a function")  # TypeError: Expected callable
+    ao.map(arr, "not a function")  # TypeError: Expected callable
 except TypeError as e:
     print(e)
 
 # Empty array with reduce (no initial)
 try:
     empty = array.array('i', [])
-    arrayops.reduce(empty, lambda acc, x: acc + x)  # ValueError: reduce() of empty array
+    ao.reduce(empty, lambda acc, x: acc + x)  # ValueError: reduce() of empty array
 except ValueError as e:
     print(e)
 ```
@@ -406,7 +406,7 @@ All functions validate their inputs:
 - Typecode validation ensures only numeric types are supported
 - Clear error messages guide users to correct usage
 
-For static type checking with mypy, type stubs are provided in `arrayops._arrayops`.
+For static type checking with mypy, type stubs are provided in `ao._arrayops`.
 
 ## NumPy Integration
 
