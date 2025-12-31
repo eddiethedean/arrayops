@@ -270,3 +270,4 @@ fastarray would:
 - Fill a real gap between `array.array` and NumPy
 - Leverage Rust for safety + speed
 - Enable high-performance numeric scripts with zero dependencies
+

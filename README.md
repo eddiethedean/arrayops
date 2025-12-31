@@ -138,9 +138,10 @@ data = array.array('i', [10, 20, 30, 40, 50])
 total = arrayops.sum(data)
 print(f"Sum: {total}")  # Sum: 150
 
-# Scale in-place
-arrayops.scale(data, 1.5)
-print(list(data))  # [15, 30, 45, 60, 75]
+# Scale in-place (use float array for fractional factors)
+data_float = array.array('f', [10.0, 20.0, 30.0, 40.0, 50.0])
+arrayops.scale(data_float, 1.5)
+print(list(data_float))  # [15.0, 30.0, 45.0, 60.0, 75.0]
 ```
 
 ### Binary Protocol Parsing
@@ -167,15 +168,20 @@ import array
 import arrayops
 
 # Process large dataset
-sensor_readings = array.array('f', [...])  # Millions of readings
+sensor_readings = array.array('f', [10.5, 25.3, 15.8, 30.2, 20.1, 18.7, 22.4])
 
 # Normalize to 0-1 range
 min_val = min(sensor_readings)
 max_val = max(sensor_readings)
 range_size = max_val - min_val
 
-arrayops.scale(sensor_readings, 1.0 / range_size)
-# Now all values are in [0, 1] range
+if range_size > 0:
+    # Shift to start at 0
+    for i in range(len(sensor_readings)):
+        sensor_readings[i] -= min_val
+    # Scale to 0-1
+    arrayops.scale(sensor_readings, 1.0 / range_size)
+    # Now all values are in [0, 1] range
 
 # Compute statistics
 total = arrayops.sum(sensor_readings)
@@ -211,8 +217,8 @@ import array
 import arrayops
 import time
 
-# Create large array (1 million integers)
-arr = array.array('i', list(range(1_000_000)))
+# Create large array (100K integers - note: use smaller for int32 to avoid overflow)
+arr = array.array('i', list(range(100_000)))
 
 # Python sum
 start = time.perf_counter()
@@ -388,7 +394,7 @@ Contributions are welcome! Please:
 5. Run code quality checks (`ruff format`, `ruff check`, `mypy`)
 6. Submit a pull request
 
-See [design.md](design.md) for architecture details.
+See [docs/design.md](docs/design.md) for architecture details.
 
 ## 📄 License
 
@@ -403,7 +409,7 @@ MIT License - see LICENSE file for details.
 ## 📞 Support
 
 - **Issues**: Report bugs or request features on GitHub
-- **Documentation**: See [design.md](design.md) for detailed architecture
+- **Documentation**: See [docs/design.md](docs/design.md) for detailed architecture
 - **Questions**: Open a discussion on GitHub
 
 ---
