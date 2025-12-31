@@ -23,6 +23,22 @@ MANIFEST
 venv/
 env/
 ENV/
+benchmark_results.json/
+cobertura.xml
+coverage.xml
+coverage_html/
+coverage.json
+junit.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+.coverage.*.*
+.coverage.*.*.*
+.coverage.*.*.*.*
+.coverage.*.*.*.*.*
 
 # Rust
 target/
