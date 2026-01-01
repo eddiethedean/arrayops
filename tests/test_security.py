@@ -9,6 +9,7 @@ These tests verify security properties including:
 """
 
 import array
+import sys
 import pytest
 
 try:
@@ -177,6 +178,10 @@ class TestIntegerOverflow:
         assert isinstance(result, int)
         assert result == -2_000_000_000
 
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="Windows uses 32-bit long, test requires 64-bit",
+    )
     def test_integer_overflow_does_not_crash(self):
         """Test that integer overflow is handled safely.
 
