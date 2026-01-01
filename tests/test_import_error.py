@@ -39,6 +39,7 @@ class TestImportErrors:
             "sort",
             "unique",
             "slice",
+            "array_iterator",
             "lazy_array",
         ]
 
@@ -46,8 +47,9 @@ class TestImportErrors:
             func = getattr(arrayops, func_name)
             assert callable(func), f"{func_name} should be callable"
 
-        # LazyArray is a class, not callable
-        assert hasattr(arrayops, "LazyArray")
-        LazyArray = getattr(arrayops, "LazyArray")
-        # Check it's a class-like object (has __init__ or similar)
-        assert hasattr(LazyArray, "__new__") or hasattr(LazyArray, "__init__")
+        # ArrayIterator and LazyArray are classes, not callable
+        for class_name in ["ArrayIterator", "LazyArray"]:
+            assert hasattr(arrayops, class_name), f"{class_name} should be available"
+            cls = getattr(arrayops, class_name)
+            # Check it's a class-like object (has __new__ or similar)
+            assert hasattr(cls, "__new__") or hasattr(cls, "__init__"), f"{class_name} should be a class"

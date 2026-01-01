@@ -820,6 +820,138 @@ print(lazy.len())  # 3
 
 ---
 
+## Iterator Protocol
+
+### Basic Iteration
+
+```python
+import array
+import arrayops as ao
+
+arr = array.array('i', [1, 2, 3, 4, 5])
+
+# Create an iterator
+it = ao.array_iterator(arr)
+
+# Use in a for loop
+for value in it:
+    print(value)  # Prints: 1, 2, 3, 4, 5
+
+# Convert to list
+it = ao.array_iterator(arr)
+values = list(it)
+print(values)  # [1, 2, 3, 4, 5]
+```
+
+### Using with Built-in Functions
+
+```python
+import array
+import arrayops as ao
+
+arr = array.array('i', [1, 2, 3, 4, 5])
+
+# Use with sum()
+it = ao.array_iterator(arr)
+total = sum(it)
+print(total)  # 15
+
+# Use with any() and all()
+it = ao.array_iterator(arr)
+has_positive = any(x > 0 for x in it)  # True
+
+it = ao.array_iterator(arr)
+all_positive = all(x > 0 for x in it)  # True
+```
+
+### List Comprehensions
+
+```python
+import array
+import arrayops as ao
+
+arr = array.array('i', [1, 2, 3, 4, 5])
+
+# Use in list comprehension
+it = ao.array_iterator(arr)
+doubled = [x * 2 for x in it]
+print(doubled)  # [2, 4, 6, 8, 10]
+
+# Filter while iterating
+it = ao.array_iterator(arr)
+evens = [x for x in it if x % 2 == 0]
+print(evens)  # [2, 4]
+```
+
+### Using next() Function
+
+```python
+import array
+import arrayops as ao
+
+arr = array.array('i', [1, 2, 3, 4, 5])
+it = ao.array_iterator(arr)
+
+# Get individual elements
+first = next(it)  # 1
+second = next(it)  # 2
+third = next(it)  # 3
+
+# StopIteration raised when exhausted
+try:
+    while True:
+        value = next(it)
+        print(value)
+except StopIteration:
+    print("Iterator exhausted")
+```
+
+### Iterating LazyArray
+
+```python
+import array
+import arrayops as ao
+
+arr = array.array('i', [1, 2, 3, 4, 5])
+
+# LazyArray supports iteration
+lazy = ao.lazy_array(arr)
+lazy = lazy.map(lambda x: x * 2).filter(lambda x: x > 5)
+
+# Iterate directly - chain is evaluated automatically
+for value in lazy:
+    print(value)  # Prints: 6, 8, 10
+
+# Can also convert to list
+result = list(lazy)
+print(result)  # [6, 8, 10]
+```
+
+### Different Array Types
+
+```python
+import array
+import arrayops as ao
+
+# Works with array.array
+arr = array.array('i', [1, 2, 3])
+it = ao.array_iterator(arr)
+print(list(it))  # [1, 2, 3]
+
+# Works with numpy arrays
+import numpy as np
+narr = np.array([1.5, 2.5, 3.5], dtype=np.float32)
+it = ao.array_iterator(narr)
+print(list(it))  # [1.5, 2.5, 3.5]
+
+# Works with memoryview
+mv = memoryview(arr)
+it = ao.array_iterator(mv)
+print(list(it))  # [1, 2, 3]
+```
+
+---
+
 ## Best Practices
 
 1. **Use appropriate types**: Choose the smallest numeric type that fits your data to save memory
@@ -834,6 +966,7 @@ print(lazy.len())  # 3
 10. **Unique for deduplication**: Use `ao.unique()` to efficiently remove duplicates and get sorted unique values
 11. **Use zero-copy slicing**: Use `ao.slice()` for views of array portions without copying data
 12. **Lazy evaluation for chains**: Use `ao.lazy_array()` to chain multiple `map()` and `filter()` operations efficiently, avoiding intermediate allocations
+13. **Efficient iteration**: Use `ao.array_iterator()` for Rust-optimized iteration over arrays when you need to iterate element-by-element
 
 ## Related Documentation
 

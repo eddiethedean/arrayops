@@ -37,6 +37,8 @@ class TestModuleInitialization:
             "sort",
             "unique",
             "slice",
+            "array_iterator",
+            "ArrayIterator",
             "lazy_array",
             "LazyArray",
         ]
@@ -69,6 +71,8 @@ class TestModuleInitialization:
             "sort",
             "unique",
             "slice",
+            "array_iterator",
+            "ArrayIterator",
             "lazy_array",
             "LazyArray",
         ]

@@ -416,6 +416,142 @@ fn get_itemsize(array: &PyAny) -> PyResult<usize> {
     Ok(itemsize)
 }
 
+// ============================================================================
+// Macro System for Typecode Dispatch (Phase 1)
+// ============================================================================
+
+/// Macro to generate a complete match statement for typecode dispatch with immutable buffers
+/// 
+/// This macro generates a full match expression that handles all typecodes,
+/// including special handling for Int64/UInt64 itemsize checking.
+/// The body block will be repeated for each typecode with the appropriate buffer type.
+/// 
+/// Usage:
+/// ```rust,ignore
+/// dispatch_by_typecode!(typecode, array, |buffer| {
+///     let result = operation_impl(py, &buffer)?;
+///     Ok(result.to_object(py))
+/// })
+/// ```
+macro_rules! dispatch_by_typecode {
+    ($typecode:expr, $array:expr, |$buffer:ident| $body:block) => {
+        match $typecode {
+            TypeCode::Int8 => {
+                let $buffer = PyBuffer::<i8>::get($array)?;
+                $body
+            }
+            TypeCode::Int16 => {
+                let $buffer = PyBuffer::<i16>::get($array)?;
+                $body
+            }
+            TypeCode::Int32 => {
+                let $buffer = PyBuffer::<i32>::get($array)?;
+                $body
+            }
+            TypeCode::Int64 => {
+                let itemsize = get_itemsize($array)?;
+                if itemsize == 4 {
+                    let $buffer = PyBuffer::<i32>::get($array)?;
+                    $body
+                } else {
+                    let $buffer = PyBuffer::<i64>::get($array)?;
+                    $body
+                }
+            }
+            TypeCode::UInt8 => {
+                let $buffer = PyBuffer::<u8>::get($array)?;
+                $body
+            }
+            TypeCode::UInt16 => {
+                let $buffer = PyBuffer::<u16>::get($array)?;
+                $body
+            }
+            TypeCode::UInt32 => {
+                let $buffer = PyBuffer::<u32>::get($array)?;
+                $body
+            }
+            TypeCode::UInt64 => {
+                let itemsize = get_itemsize($array)?;
+                if itemsize == 4 {
+                    let $buffer = PyBuffer::<u32>::get($array)?;
+                    $body
+                } else {
+                    let $buffer = PyBuffer::<u64>::get($array)?;
+                    $body
+                }
+            }
+            TypeCode::Float32 => {
+                let $buffer = PyBuffer::<f32>::get($array)?;
+                $body
+            }
+            TypeCode::Float64 => {
+                let $buffer = PyBuffer::<f64>::get($array)?;
+                $body
+            }
+        }
+    };
+}
+
+/// Macro to generate a complete match statement for typecode dispatch with mutable buffers
+macro_rules! dispatch_by_typecode_mut {
+    ($typecode:expr, $array:expr, |$buffer:ident| $body:block) => {
+        match $typecode {
+            TypeCode::Int8 => {
+                let mut $buffer = PyBuffer::<i8>::get($array)?;
+                $body
+            }
+            TypeCode::Int16 => {
+                let mut $buffer = PyBuffer::<i16>::get($array)?;
+                $body
+            }
+            TypeCode::Int32 => {
+                let mut $buffer = PyBuffer::<i32>::get($array)?;
+                $body
+            }
+            TypeCode::Int64 => {
+                let itemsize = get_itemsize($array)?;
+                if itemsize == 4 {
+                    let mut $buffer = PyBuffer::<i32>::get($array)?;
+                    $body
+                } else {
+                    let mut $buffer = PyBuffer::<i64>::get($array)?;
+                    $body
+                }
+            }
+            TypeCode::UInt8 => {
+                let mut $buffer = PyBuffer::<u8>::get($array)?;
+                $body
+            }
+            TypeCode::UInt16 => {
+                let mut $buffer = PyBuffer::<u16>::get($array)?;
+                $body
+            }
+            TypeCode::UInt32 => {
+                let mut $buffer = PyBuffer::<u32>::get($array)?;
+                $body
+            }
+            TypeCode::UInt64 => {
+                let itemsize = get_itemsize($array)?;
+                if itemsize == 4 {
+                    let mut $buffer = PyBuffer::<u32>::get($array)?;
+                    $body
+                } else {
+                    let mut $buffer = PyBuffer::<u64>::get($array)?;
+                    $body
+                }
+            }
+            TypeCode::Float32 => {
+                let mut $buffer = PyBuffer::<f32>::get($array)?;
+                $body
+            }
+            TypeCode::Float64 => {
+                let mut $buffer = PyBuffer::<f64>::get($array)?;
+                $body
+            }
+        }
+    };
+}
+
 /// Create an empty result array based on input type
 fn create_empty_result_array(
     py: Python,
@@ -1026,72 +1162,26 @@ fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
     }
 
     let len = get_array_len(array)?;
-    match typecode {
-        TypeCode::Int8 => {
-            let buffer = PyBuffer::<i8>::get(array)?;
-            let result = sum_impl(py, &buffer, len)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::Int16 => {
-            let buffer = PyBuffer::<i16>::get(array)?;
-            let result = sum_impl(py, &buffer, len)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::Int32 => {
-            let buffer = PyBuffer::<i32>::get(array)?;
-            let result = sum_impl(py, &buffer, len)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::Int64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let buffer = PyBuffer::<i32>::get(array)?;
-                let result = sum_impl(py, &buffer, len)?;
-                Ok(result.to_object(py))
-            } else {
-                let buffer = PyBuffer::<i64>::get(array)?;
-                let result = sum_impl(py, &buffer, len)?;
-                Ok(result.to_object(py))
-            }
-        }
-        TypeCode::UInt8 => {
-            let buffer = PyBuffer::<u8>::get(array)?;
-            let result = sum_impl(py, &buffer, len)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::UInt16 => {
-            let buffer = PyBuffer::<u16>::get(array)?;
-            let result = sum_impl(py, &buffer, len)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::UInt32 => {
-            let buffer = PyBuffer::<u32>::get(array)?;
-            let result = sum_impl(py, &buffer, len)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::UInt64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let buffer = PyBuffer::<u32>::get(array)?;
-                let result = sum_impl(py, &buffer, len)?;
-                Ok(result.to_object(py))
-            } else {
-                let buffer = PyBuffer::<u64>::get(array)?;
-                let result = sum_impl(py, &buffer, len)?;
-                Ok(result.to_object(py))
-            }
-        }
-        TypeCode::Float32 => {
-            let buffer = PyBuffer::<f32>::get(array)?;
-            let result = sum_impl(py, &buffer, len)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::Float64 => {
-            let buffer = PyBuffer::<f64>::get(array)?;
-            let result = sum_impl(py, &buffer, len)?;
-            Ok(result.to_object(py))
-        }
-    }
+    dispatch_by_typecode!(typecode, array, |buffer| {
+        let result = sum_impl(py, &buffer, len)?;
+        Ok(result.to_object(py))
+    })
+}
+
+/// Helper function to extract an element at a specific index from a buffer
+fn extract_element_at_index<T>(
+    py: Python,
+    source_ref: &PyAny,
+    index: usize,
+) -> PyResult<PyObject>
+where
+    T: Element + Copy + pyo3::ToPyObject,
+{
+    let buffer = PyBuffer::<T>::get(source_ref)?;
+    let slice = buffer
+        .as_slice(py)
+        .ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
+    Ok(slice[index].get().to_object(py))
 }
 
 /// Scale operation (in-place) for array.array, numpy.ndarray, or memoryview
@@ -1203,60 +1293,9 @@ fn map(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<PyObject> {
         return create_empty_result_array(py, typecode, input_type);
     }
 
-    match typecode {
-        TypeCode::Int8 => {
-            let buffer = PyBuffer::<i8>::get(array)?;
-            map_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::Int16 => {
-            let buffer = PyBuffer::<i16>::get(array)?;
-            map_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::Int32 => {
-            let buffer = PyBuffer::<i32>::get(array)?;
-            map_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::Int64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let buffer = PyBuffer::<i32>::get(array)?;
-                map_impl(py, &buffer, callable, typecode, input_type)
-            } else {
-                let buffer = PyBuffer::<i64>::get(array)?;
-                map_impl(py, &buffer, callable, typecode, input_type)
-            }
-        }
-        TypeCode::UInt8 => {
-            let buffer = PyBuffer::<u8>::get(array)?;
-            map_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::UInt16 => {
-            let buffer = PyBuffer::<u16>::get(array)?;
-            map_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::UInt32 => {
-            let buffer = PyBuffer::<u32>::get(array)?;
-            map_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::UInt64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let buffer = PyBuffer::<u32>::get(array)?;
-                map_impl(py, &buffer, callable, typecode, input_type)
-            } else {
-                let buffer = PyBuffer::<u64>::get(array)?;
-                map_impl(py, &buffer, callable, typecode, input_type)
-            }
-        }
-        TypeCode::Float32 => {
-            let buffer = PyBuffer::<f32>::get(array)?;
-            map_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::Float64 => {
-            let buffer = PyBuffer::<f64>::get(array)?;
-            map_impl(py, &buffer, callable, typecode, input_type)
-        }
-    }
+    dispatch_by_typecode!(typecode, array, |buffer| {
+        map_impl(py, &buffer, callable, typecode, input_type)
+    })
 }
 
 // Generic map_inplace implementation
@@ -1292,60 +1331,9 @@ fn map_inplace(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<()> {
         return Ok(());
     }
 
-    match typecode {
-        TypeCode::Int8 => {
-            let mut buffer = PyBuffer::<i8>::get(array)?;
-            map_inplace_impl(py, &mut buffer, callable)
-        }
-        TypeCode::Int16 => {
-            let mut buffer = PyBuffer::<i16>::get(array)?;
-            map_inplace_impl(py, &mut buffer, callable)
-        }
-        TypeCode::Int32 => {
-            let mut buffer = PyBuffer::<i32>::get(array)?;
-            map_inplace_impl(py, &mut buffer, callable)
-        }
-        TypeCode::Int64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let mut buffer = PyBuffer::<i32>::get(array)?;
-                map_inplace_impl(py, &mut buffer, callable)
-            } else {
-                let mut buffer = PyBuffer::<i64>::get(array)?;
-                map_inplace_impl(py, &mut buffer, callable)
-            }
-        }
-        TypeCode::UInt8 => {
-            let mut buffer = PyBuffer::<u8>::get(array)?;
-            map_inplace_impl(py, &mut buffer, callable)
-        }
-        TypeCode::UInt16 => {
-            let mut buffer = PyBuffer::<u16>::get(array)?;
-            map_inplace_impl(py, &mut buffer, callable)
-        }
-        TypeCode::UInt32 => {
-            let mut buffer = PyBuffer::<u32>::get(array)?;
-            map_inplace_impl(py, &mut buffer, callable)
-        }
-        TypeCode::UInt64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let mut buffer = PyBuffer::<u32>::get(array)?;
-                map_inplace_impl(py, &mut buffer, callable)
-            } else {
-                let mut buffer = PyBuffer::<u64>::get(array)?;
-                map_inplace_impl(py, &mut buffer, callable)
-            }
-        }
-        TypeCode::Float32 => {
-            let mut buffer = PyBuffer::<f32>::get(array)?;
-            map_inplace_impl(py, &mut buffer, callable)
-        }
-        TypeCode::Float64 => {
-            let mut buffer = PyBuffer::<f64>::get(array)?;
-            map_inplace_impl(py, &mut buffer, callable)
-        }
-    }
+    dispatch_by_typecode_mut!(typecode, array, |buffer| {
+        map_inplace_impl(py, &mut buffer, callable)
+    })
 }
 
 // Generic filter implementation
@@ -1391,60 +1379,9 @@ fn filter(py: Python, array: &PyAny, predicate: PyObject) -> PyResult<PyObject> 
         return create_empty_result_array(py, typecode, input_type);
     }
 
-    match typecode {
-        TypeCode::Int8 => {
-            let buffer = PyBuffer::<i8>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::Int16 => {
-            let buffer = PyBuffer::<i16>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::Int32 => {
-            let buffer = PyBuffer::<i32>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::Int64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let buffer = PyBuffer::<i32>::get(array)?;
-                filter_impl(py, &buffer, callable, typecode, input_type)
-            } else {
-                let buffer = PyBuffer::<i64>::get(array)?;
-                filter_impl(py, &buffer, callable, typecode, input_type)
-            }
-        }
-        TypeCode::UInt8 => {
-            let buffer = PyBuffer::<u8>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::UInt16 => {
-            let buffer = PyBuffer::<u16>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::UInt32 => {
-            let buffer = PyBuffer::<u32>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::UInt64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let buffer = PyBuffer::<u32>::get(array)?;
-                filter_impl(py, &buffer, callable, typecode, input_type)
-            } else {
-                let buffer = PyBuffer::<u64>::get(array)?;
-                filter_impl(py, &buffer, callable, typecode, input_type)
-            }
-        }
-        TypeCode::Float32 => {
-            let buffer = PyBuffer::<f32>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode, input_type)
-        }
-        TypeCode::Float64 => {
-            let buffer = PyBuffer::<f64>::get(array)?;
-            filter_impl(py, &buffer, callable, typecode, input_type)
-        }
-    }
+    dispatch_by_typecode!(typecode, array, |buffer| {
+        filter_impl(py, &buffer, callable, typecode, input_type)
+    })
 }
 
 // Generic reduce implementation
@@ -1513,60 +1450,9 @@ fn reduce(
         };
     }
 
-    match typecode {
-        TypeCode::Int8 => {
-            let buffer = PyBuffer::<i8>::get(array)?;
-            reduce_impl(py, &buffer, callable, initial)
-        }
-        TypeCode::Int16 => {
-            let buffer = PyBuffer::<i16>::get(array)?;
-            reduce_impl(py, &buffer, callable, initial)
-        }
-        TypeCode::Int32 => {
-            let buffer = PyBuffer::<i32>::get(array)?;
-            reduce_impl(py, &buffer, callable, initial)
-        }
-        TypeCode::Int64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let buffer = PyBuffer::<i32>::get(array)?;
-                reduce_impl(py, &buffer, callable, initial)
-            } else {
-                let buffer = PyBuffer::<i64>::get(array)?;
-                reduce_impl(py, &buffer, callable, initial)
-            }
-        }
-        TypeCode::UInt8 => {
-            let buffer = PyBuffer::<u8>::get(array)?;
-            reduce_impl(py, &buffer, callable, initial)
-        }
-        TypeCode::UInt16 => {
-            let buffer = PyBuffer::<u16>::get(array)?;
-            reduce_impl(py, &buffer, callable, initial)
-        }
-        TypeCode::UInt32 => {
-            let buffer = PyBuffer::<u32>::get(array)?;
-            reduce_impl(py, &buffer, callable, initial)
-        }
-        TypeCode::UInt64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let buffer = PyBuffer::<u32>::get(array)?;
-                reduce_impl(py, &buffer, callable, initial)
-            } else {
-                let buffer = PyBuffer::<u64>::get(array)?;
-                reduce_impl(py, &buffer, callable, initial)
-            }
-        }
-        TypeCode::Float32 => {
-            let buffer = PyBuffer::<f32>::get(array)?;
-            reduce_impl(py, &buffer, callable, initial)
-        }
-        TypeCode::Float64 => {
-            let buffer = PyBuffer::<f64>::get(array)?;
-            reduce_impl(py, &buffer, callable, initial)
-        }
-    }
+    dispatch_by_typecode!(typecode, array, |buffer| {
+        reduce_impl(py, &buffer, callable, initial)
+    })
 }
 
 /// Mean operation for array.array, numpy.ndarray, or memoryview
@@ -1661,72 +1547,10 @@ fn min(py: Python, array: &PyAny) -> PyResult<PyObject> {
         return Err(PyValueError::new_err("min() of empty array"));
     }
 
-    match typecode {
-        TypeCode::Int8 => {
-            let buffer = PyBuffer::<i8>::get(array)?;
-            let result = min_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::Int16 => {
-            let buffer = PyBuffer::<i16>::get(array)?;
-            let result = min_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::Int32 => {
-            let buffer = PyBuffer::<i32>::get(array)?;
-            let result = min_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::Int64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let buffer = PyBuffer::<i32>::get(array)?;
-                let result = min_impl(py, &buffer)?;
-                Ok(result.to_object(py))
-            } else {
-                let buffer = PyBuffer::<i64>::get(array)?;
-                let result = min_impl(py, &buffer)?;
-                Ok(result.to_object(py))
-            }
-        }
-        TypeCode::UInt8 => {
-            let buffer = PyBuffer::<u8>::get(array)?;
-            let result = min_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::UInt16 => {
-            let buffer = PyBuffer::<u16>::get(array)?;
-            let result = min_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::UInt32 => {
-            let buffer = PyBuffer::<u32>::get(array)?;
-            let result = min_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::UInt64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let buffer = PyBuffer::<u32>::get(array)?;
-                let result = min_impl(py, &buffer)?;
-                Ok(result.to_object(py))
-            } else {
-                let buffer = PyBuffer::<u64>::get(array)?;
-                let result = min_impl(py, &buffer)?;
-                Ok(result.to_object(py))
-            }
-        }
-        TypeCode::Float32 => {
-            let buffer = PyBuffer::<f32>::get(array)?;
-            let result = min_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::Float64 => {
-            let buffer = PyBuffer::<f64>::get(array)?;
-            let result = min_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-    }
+    dispatch_by_typecode!(typecode, array, |buffer| {
+        let result = min_impl(py, &buffer)?;
+        Ok(result.to_object(py))
+    })
 }
 
 /// Max operation for array.array, numpy.ndarray, or memoryview
@@ -1742,72 +1566,10 @@ fn max(py: Python, array: &PyAny) -> PyResult<PyObject> {
         return Err(PyValueError::new_err("max() of empty array"));
     }
 
-    match typecode {
-        TypeCode::Int8 => {
-            let buffer = PyBuffer::<i8>::get(array)?;
-            let result = max_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::Int16 => {
-            let buffer = PyBuffer::<i16>::get(array)?;
-            let result = max_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::Int32 => {
-            let buffer = PyBuffer::<i32>::get(array)?;
-            let result = max_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::Int64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let buffer = PyBuffer::<i32>::get(array)?;
-                let result = max_impl(py, &buffer)?;
-                Ok(result.to_object(py))
-            } else {
-                let buffer = PyBuffer::<i64>::get(array)?;
-                let result = max_impl(py, &buffer)?;
-                Ok(result.to_object(py))
-            }
-        }
-        TypeCode::UInt8 => {
-            let buffer = PyBuffer::<u8>::get(array)?;
-            let result = max_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::UInt16 => {
-            let buffer = PyBuffer::<u16>::get(array)?;
-            let result = max_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::UInt32 => {
-            let buffer = PyBuffer::<u32>::get(array)?;
-            let result = max_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::UInt64 => {
-            let itemsize = get_itemsize(array)?;
-            if itemsize == 4 {
-                let buffer = PyBuffer::<u32>::get(array)?;
-                let result = max_impl(py, &buffer)?;
-                Ok(result.to_object(py))
-            } else {
-                let buffer = PyBuffer::<u64>::get(array)?;
-                let result = max_impl(py, &buffer)?;
-                Ok(result.to_object(py))
-            }
-        }
-        TypeCode::Float32 => {
-            let buffer = PyBuffer::<f32>::get(array)?;
-            let result = max_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-        TypeCode::Float64 => {
-            let buffer = PyBuffer::<f64>::get(array)?;
-            let result = max_impl(py, &buffer)?;
-            Ok(result.to_object(py))
-        }
-    }
+    dispatch_by_typecode!(typecode, array, |buffer| {
+        let result = max_impl(py, &buffer)?;
+        Ok(result.to_object(py))
+    })
 }
 
 // Generic std/var implementation for integer types
@@ -3103,6 +2865,91 @@ fn unique(py: Python, array: &PyAny) -> PyResult<PyObject> {
     }
 }
 
+/// ArrayIterator - Efficient Rust-optimized iterator for array types
+#[pyclass]
+pub struct ArrayIterator {
+    source: PyObject,
+    typecode: TypeCode,
+    current_index: usize,
+    length: usize,
+}
+
+#[pymethods]
+#[allow(non_local_definitions)]
+impl ArrayIterator {
+    /// Create a new ArrayIterator from an array-like object
+    #[new]
+    pub fn new(py: Python, source: PyObject) -> PyResult<Self> {
+        let source_ref = source.as_ref(py);
+        let input_type = detect_input_type(source_ref)?;
+        validate_for_operation(source_ref, input_type, false)?;
+        let typecode = get_typecode_unified(source_ref, input_type)?;
+        let length = get_array_len(source_ref)?;
+
+        Ok(ArrayIterator {
+            source,
+            typecode,
+            current_index: 0,
+            length,
+        })
+    }
+
+    /// Return self as the iterator (required by iterator protocol)
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    /// Return the next element or None (raises StopIteration in Python)
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<PyObject>> {
+        if slf.current_index >= slf.length {
+            return Ok(None); // None signals StopIteration in PyO3
+        }
+
+        let py = slf.py();
+        let index = slf.current_index;
+        let typecode = slf.typecode;
+        let source = slf.source.clone_ref(py);
+        slf.current_index += 1;
+
+        // Get element at index based on typecode
+        let source_ref = source.as_ref(py);
+        let result = match typecode {
+            TypeCode::Int8 => extract_element_at_index::<i8>(py, source_ref, index)?,
+            TypeCode::Int16 => extract_element_at_index::<i16>(py, source_ref, index)?,
+            TypeCode::Int32 => extract_element_at_index::<i32>(py, source_ref, index)?,
+            TypeCode::Int64 => {
+                let itemsize = get_itemsize(source_ref)?;
+                if itemsize == 4 {
+                    extract_element_at_index::<i32>(py, source_ref, index)?
+                } else {
+                    extract_element_at_index::<i64>(py, source_ref, index)?
+                }
+            }
+            TypeCode::UInt8 => extract_element_at_index::<u8>(py, source_ref, index)?,
+            TypeCode::UInt16 => extract_element_at_index::<u16>(py, source_ref, index)?,
+            TypeCode::UInt32 => extract_element_at_index::<u32>(py, source_ref, index)?,
+            TypeCode::UInt64 => {
+                let itemsize = get_itemsize(source_ref)?;
+                if itemsize == 4 {
+                    extract_element_at_index::<u32>(py, source_ref, index)?
+                } else {
+                    extract_element_at_index::<u64>(py, source_ref, index)?
+                }
+            }
+            TypeCode::Float32 => extract_element_at_index::<f32>(py, source_ref, index)?,
+            TypeCode::Float64 => extract_element_at_index::<f64>(py, source_ref, index)?,
+        };
+
+        Ok(Some(result))
+    }
+}
+
+/// Helper function to create an ArrayIterator
+#[pyfunction]
+fn array_iterator(py: Python, array: PyObject) -> PyResult<Py<ArrayIterator>> {
+    Py::new(py, ArrayIterator::new(py, array)?)
+}
+
 /// Helper function to create a LazyArray wrapper
 #[pyfunction]
 fn lazy_array(py: Python, array: PyObject) -> PyResult<Py<lazy::LazyArray>> {
@@ -3132,6 +2979,8 @@ fn _arrayops(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sort, m)?)?;
     m.add_function(wrap_pyfunction!(unique, m)?)?;
     m.add_function(wrap_pyfunction!(slice, m)?)?;
+    m.add_class::<ArrayIterator>()?;
+    m.add_function(wrap_pyfunction!(array_iterator, m)?)?;
     m.add_class::<lazy::LazyArray>()?;
     m.add_function(wrap_pyfunction!(lazy_array, m)?)?;
     Ok(())

@@ -1011,6 +1011,114 @@ print(list(view))  # [2, 99, 4]  (view reflects the change)
 
 ---
 
+### `array_iterator(arr) -> ArrayIterator`
+
+Create an efficient Rust-optimized iterator for an array-like object.
+
+**Parameters:**
+- `arr` (`array.array`, `numpy.ndarray`, `memoryview`, or Arrow buffer/array): Input array with numeric type
+
+**Returns:**
+- `ArrayIterator`: An iterator object that supports Python's iterator protocol
+
+**Raises:**
+- `TypeError`: If input is not an `array.array`, `numpy.ndarray`, `memoryview`, or Arrow buffer/array
+- `TypeError`: If array uses an unsupported typecode
+
+**Notes:**
+- The iterator uses Rust's buffer protocol for efficient element access
+- Works with all supported array types (array.array, numpy.ndarray, memoryview)
+- Compatible with Python's iterator protocol (for loops, list(), sum(), etc.)
+- Zero-copy or near-zero-copy iteration from Rust buffers
+
+**Example:**
+```python
+import array
+import arrayops as ao
+
+arr = array.array('i', [1, 2, 3, 4, 5])
+
+# Create iterator
+it = ao.array_iterator(arr)
+
+# Use in for loop
+for value in it:
+    print(value)  # Prints: 1, 2, 3, 4, 5
+
+# Convert to list
+it = ao.array_iterator(arr)
+values = list(it)
+print(values)  # [1, 2, 3, 4, 5]
+
+# Use with built-in functions
+it = ao.array_iterator(arr)
+total = sum(it)
+print(total)  # 15
+```
+
+**See also:**
+- [Examples: Iterator Protocol](examples.md#iterator-protocol)
+- [ArrayIterator Class](#arrayiterator-class)
+
+---
+
+### `ArrayIterator` Class
+
+An efficient Rust-optimized iterator for array-like objects.
+
+The `ArrayIterator` class provides efficient iteration over array types using Rust's buffer protocol access. It implements Python's iterator protocol and can be used in for loops, list comprehensions, and other iterator contexts.
+
+#### Constructor
+
+**`ArrayIterator(source)`**
+
+Create a new ArrayIterator from a source array.
+
+- `source` (`array.array`, `numpy.ndarray`, `memoryview`, or Arrow buffer/array): The source array to iterate over
+- Returns: New `ArrayIterator` instance
+
+#### Methods
+
+**`__iter__() -> ArrayIterator`**
+
+Return the iterator itself (required by iterator protocol).
+
+- Returns: The iterator object itself
+
+**`__next__() -> Union[int, float]`**
+
+Return the next element in the iteration.
+
+- Returns: The next element in the array (int for integer arrays, float for float arrays)
+- Raises: `StopIteration` when there are no more elements
+
+**Example:**
+```python
+import array
+import arrayops as ao
+
+arr = array.array('i', [1, 2, 3, 4, 5])
+
+# Create iterator
+it = ao.array_iterator(arr)
+
+# Use iterator protocol methods
+it2 = iter(it)  # __iter__() called
+first = next(it2)  # 1 (__next__() called)
+second = next(it2)  # 2
+third = next(it2)  # 3
+
+# Use in for loop
+for value in ao.array_iterator(arr):
+    print(value)  # Prints: 1, 2, 3, 4, 5
+```
+
+**See also:**
+- [Examples: Iterator Protocol](examples.md#iterator-protocol)
+- [`array_iterator()` function](#array_iteratorarr---arrayiterator)
+
+---
+
 ### `lazy_array(arr) -> LazyArray`
 
 Create a lazy array that can chain operations without intermediate allocations.
@@ -1091,6 +1199,13 @@ Get the number of operations in the chain.
 
 - Returns: Number of operations in the chain
 
+**`__iter__() -> ArrayIterator`**
+
+Iterator protocol: evaluate lazy chain and return an iterator.
+
+- Returns: An `ArrayIterator` over the evaluated array result
+- Notes: This method evaluates the lazy chain (if not already cached) and returns an iterator over the result, enabling direct iteration over LazyArray objects
+
 **Example:**
 ```python
 import array
@@ -1113,6 +1228,12 @@ print(list(result))  # [6, 8, 10]
 # Get source
 source = lazy.source()
 print(list(source))  # [1, 2, 3, 4, 5]
+
+# Iterate directly (evaluates chain automatically)
+lazy = ao.lazy_array(arr)
+lazy = lazy.map(lambda x: x * 2).filter(lambda x: x > 5)
+for value in lazy:
+    print(value)  # Prints: 6, 8, 10
 ```
 
 ---

@@ -78,6 +78,8 @@ try:
         sort,
         unique,
         slice,
+        array_iterator,
+        ArrayIterator,
         lazy_array,
         LazyArray,
     )
@@ -103,6 +105,8 @@ try:
         "sort",
         "unique",
         "slice",
+        "array_iterator",
+        "ArrayIterator",
         "lazy_array",
         "LazyArray",
     ]

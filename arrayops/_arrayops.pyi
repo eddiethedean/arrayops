@@ -881,6 +881,116 @@ def slice(
     """
     ...
 
+def array_iterator(arr: _ArrayLike) -> "ArrayIterator":
+    """
+    Create an efficient Rust-optimized iterator for an array-like object.
+
+    This function creates an ArrayIterator object that provides efficient
+    iteration over array types using Rust's buffer protocol access. The iterator
+    is compatible with Python's iterator protocol and can be used in for loops,
+    list comprehensions, and other iterator contexts.
+
+    Args:
+        arr: Input array with numeric type. Must be one of:
+            - ``array.array`` with typecode: ``b``, ``B``, ``h``, ``H``, ``i``, ``I``, ``l``, ``L``, ``f``, ``d``
+            - ``numpy.ndarray``: must be 1-dimensional and contiguous
+            - ``memoryview``: read-only or writable memoryviews are supported
+            - Apache Arrow buffers/arrays
+
+    Returns:
+        ArrayIterator: An iterator object that supports Python's iterator protocol.
+
+    Raises:
+        TypeError: If input is not an ``array.array``, ``numpy.ndarray``, ``memoryview``, or Arrow buffer/array
+
+    Examples:
+        >>> import array
+        >>> import arrayops as ao
+        >>> arr = array.array('i', [1, 2, 3, 4, 5])
+        >>> it = ao.array_iterator(arr)
+        >>> list(it)
+        [1, 2, 3, 4, 5]
+        >>> for x in ao.array_iterator(arr):
+        ...     print(x)
+        1
+        2
+        3
+        4
+        5
+    """
+    ...
+
+class ArrayIterator:
+    """
+    An efficient Rust-optimized iterator for array-like objects.
+
+    ArrayIterator provides efficient iteration over array types using Rust's
+    buffer protocol access. It implements Python's iterator protocol and can
+    be used in for loops, list comprehensions, and other iterator contexts.
+
+    Examples:
+        >>> import array
+        >>> import arrayops as ao
+        >>> arr = array.array('i', [1, 2, 3, 4, 5])
+        >>> it = ao.array_iterator(arr)
+        >>> list(it)
+        [1, 2, 3, 4, 5]
+        >>> it = ao.array_iterator(arr)
+        >>> next(it)
+        1
+        >>> next(it)
+        2
+    """
+
+    def __init__(self, source: Any) -> None:
+        """
+        Create a new ArrayIterator from a source array.
+
+        Args:
+            source: The source array to iterate over. Can be an array.array,
+                numpy.ndarray, memoryview, or Arrow buffer/array.
+        """
+        ...
+
+    def __iter__(self) -> "ArrayIterator":
+        """
+        Return the iterator itself (required by iterator protocol).
+
+        Returns:
+            ArrayIterator: The iterator object itself.
+        """
+        ...
+
+    def __next__(self) -> Union[int, float]:
+        """
+        Return the next element in the iteration.
+
+        Returns:
+            Union[int, float]: The next element in the array.
+                - Returns ``int`` for integer arrays
+                - Returns ``float`` for float arrays
+
+        Raises:
+            StopIteration: When there are no more elements to iterate over.
+
+        Examples:
+            >>> import array
+            >>> import arrayops as ao
+            >>> arr = array.array('i', [1, 2, 3])
+            >>> it = ao.array_iterator(arr)
+            >>> next(it)
+            1
+            >>> next(it)
+            2
+            >>> next(it)
+            3
+            >>> next(it)
+            Traceback (most recent call last):
+                ...
+            StopIteration
+        """
+        ...
+
 def lazy_array(arr: _ArrayLike) -> "LazyArray":
     """
     Create a lazy array that can chain operations without intermediate allocations.
@@ -1078,5 +1188,30 @@ class LazyArray:
             >>> lazy = lazy.filter(lambda x: x > 2)
             >>> lazy.len()
             2
+        """
+        ...
+
+    def __iter__(self) -> "ArrayIterator":
+        """
+        Iterator protocol: evaluate lazy chain and return an iterator.
+
+        This method evaluates the lazy chain (if not already cached) and returns
+        an ArrayIterator over the result. This enables using LazyArray in for
+        loops and other iterator contexts.
+
+        Returns:
+            ArrayIterator: An iterator over the evaluated array result.
+
+        Examples:
+            >>> import array
+            >>> import arrayops as ao
+            >>> arr = array.array('i', [1, 2, 3, 4, 5])
+            >>> lazy = ao.lazy_array(arr)
+            >>> lazy = lazy.map(lambda x: x * 2).filter(lambda x: x > 5)
+            >>> for x in lazy:
+            ...     print(x)
+            6
+            8
+            10
         """
         ...

@@ -21,6 +21,7 @@ Fast, lightweight numeric operations for Python's `array.array`, `numpy.ndarray`
 - 🔒 **Memory Safe**: Zero-copy buffer access with Rust's safety guarantees
 - 📦 **Lightweight**: No dependencies beyond Rust standard library (optional: parallel execution via `rayon`)
 - 🔌 **Compatible**: Works directly with Python's `array.array`, `numpy.ndarray` (1D), `memoryview`, and Apache Arrow buffers - no new types
+- 🔄 **Iterator Protocol**: Efficient Rust-optimized iteration for all array types
 - ✅ **Fully Tested**: 100% code coverage (Python and Rust)
 - 🎯 **Type Safe**: Full mypy type checking support
 
@@ -84,6 +85,16 @@ sliced = ao.slice(data, 1, 4)  # Returns memoryview: [2, 3, 4]
 lazy = ao.lazy_array(data)
 result = lazy.map(lambda x: x * 2).filter(lambda x: x > 5).collect()
 # Efficiently chains map and filter, executes only when collect() is called
+
+# Efficient iteration
+it = ao.array_iterator(data)
+for value in it:
+    print(value)  # Iterate with Rust-optimized performance
+
+# LazyArray supports iteration too
+lazy = ao.lazy_array(data)
+for value in lazy:  # Evaluates chain and iterates
+    print(value)
 ```
 
 **📚 For complete documentation, examples, and API reference, see [arrayops.readthedocs.io](https://arrayops.readthedocs.io/)**
@@ -160,6 +171,7 @@ SIMD (Single Instruction, Multiple Data) optimizations are in development:
 | Arrow interop | ❌ | ✅ | ✅ |
 | Zero-copy slicing | ❌ | ✅ | ⚠️ |
 | Lazy evaluation | ❌ | ✅ | ❌ |
+| Iterator protocol | ⚠️ (slow) | ✅ (Rust-optimized) | ✅ |
 | Use case | Binary I/O | Scripting/ETL | Scientific computing |
 
 ## 🏗️ Architecture
