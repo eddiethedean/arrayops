@@ -267,7 +267,7 @@ If you discover a security vulnerability:
    - Suggested fix (if any)
 4. **Wait** for response before public disclosure
 
-See [SECURITY.md](../../SECURITY.md) for the full security policy.
+See [SECURITY.md](https://github.com/eddiethedean/arrayops/blob/main/SECURITY.md) for the full security policy.
 
 ## Security Resources
 

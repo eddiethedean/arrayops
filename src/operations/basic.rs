@@ -1,6 +1,7 @@
 use pyo3::buffer::{Element, PyBuffer};
 use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
+use pyo3::IntoPyObjectExt;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
@@ -18,7 +19,13 @@ use crate::buffer::{
 // Generic sum implementation with cache-friendly processing
 fn sum_impl<T>(py: Python<'_>, buffer: &PyBuffer<T>, len: usize) -> PyResult<T>
 where
-    T: Element + Copy + Default + std::ops::Add<Output = T> + IntoPy<PyObject> + Send + Sync,
+    T: Element
+        + Copy
+        + Default
+        + std::ops::Add<Output = T>
+        + for<'py> IntoPyObject<'py>
+        + Send
+        + Sync,
 {
     #[cfg(feature = "parallel")]
     {
@@ -320,6 +327,15 @@ where
 }
 
 /// Sum operation for array.array, numpy.ndarray, or memoryview
+///
+/// # Integer Overflow
+///
+/// For integer types, overflow behavior follows Rust's default wrapping arithmetic:
+/// - In debug builds: may panic if overflow checks are enabled
+/// - In release builds: uses two's complement wrapping (wraps around)
+///
+/// For large arrays where overflow is possible, consider using a larger integer type
+/// or converting to float arrays before summing.
 #[pyfunction]
 pub fn sum(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<PyObject> {
     let input_type = detect_input_type(array)?;
@@ -329,37 +345,37 @@ pub fn sum(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<PyObject> {
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
         match typecode {
-            TypeCode::Int8 => return Ok(0i8.into_py(py)),
-            TypeCode::Int16 => return Ok(0i16.into_py(py)),
-            TypeCode::Int32 => return Ok(0i32.into_py(py)),
+            TypeCode::Int8 => return 0i8.into_py_any(py),
+            TypeCode::Int16 => return 0i16.into_py_any(py),
+            TypeCode::Int32 => return 0i32.into_py_any(py),
             TypeCode::Int64 => {
                 let itemsize = get_itemsize(array)?;
                 if itemsize == 4 {
-                    return Ok(0i32.into_py(py));
+                    return 0i32.into_py_any(py);
                 } else {
-                    return Ok(0i64.into_py(py));
+                    return 0i64.into_py_any(py);
                 }
             }
-            TypeCode::UInt8 => return Ok(0u8.into_py(py)),
-            TypeCode::UInt16 => return Ok(0u16.into_py(py)),
-            TypeCode::UInt32 => return Ok(0u32.into_py(py)),
+            TypeCode::UInt8 => return 0u8.into_py_any(py),
+            TypeCode::UInt16 => return 0u16.into_py_any(py),
+            TypeCode::UInt32 => return 0u32.into_py_any(py),
             TypeCode::UInt64 => {
                 let itemsize = get_itemsize(array)?;
                 if itemsize == 4 {
-                    return Ok(0u32.into_py(py));
+                    return 0u32.into_py_any(py);
                 } else {
-                    return Ok(0u64.into_py(py));
+                    return 0u64.into_py_any(py);
                 }
             }
-            TypeCode::Float32 => return Ok(0.0f32.into_py(py)),
-            TypeCode::Float64 => return Ok(0.0f64.into_py(py)),
+            TypeCode::Float32 => return 0.0f32.into_py_any(py),
+            TypeCode::Float64 => return 0.0f64.into_py_any(py),
         }
     }
 
     let len = get_array_len(array)?;
     crate::dispatch_by_typecode!(typecode, array, |buffer| {
         let result = sum_impl(py, &buffer, len)?;
-        Ok(result.into_py(py))
+        result.into_py_any(py)
     })
 }
 
@@ -526,7 +542,7 @@ pub fn min(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<PyObject> {
 
     crate::dispatch_by_typecode!(typecode, array, |buffer| {
         let result = min_impl(py, &buffer)?;
-        Ok(result.into_py(py))
+        result.into_py_any(py)
     })
 }
 
@@ -545,6 +561,6 @@ pub fn max(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<PyObject> {
 
     crate::dispatch_by_typecode!(typecode, array, |buffer| {
         let result = max_impl(py, &buffer)?;
-        Ok(result.into_py(py))
+        result.into_py_any(py)
     })
 }

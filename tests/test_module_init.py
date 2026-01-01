@@ -10,7 +10,7 @@ class TestModuleInitialization:
 
         assert arrayops is not None
         assert hasattr(arrayops, "__version__")
-        assert arrayops.__version__ == "1.0.0"
+        assert arrayops.__version__ == "1.0.1"
 
     def test_module_imports_all_functions(self):
         """Test that all expected functions are imported."""

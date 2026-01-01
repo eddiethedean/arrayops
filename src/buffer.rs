@@ -2,6 +2,7 @@ use pyo3::buffer::{Element, PyBuffer};
 use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
+use pyo3::IntoPyObjectExt;
 
 #[cfg(feature = "parallel")]
 #[allow(unused_imports)] // Only used when parallel feature is enabled
@@ -29,13 +30,13 @@ pub(crate) fn extract_element_at_index<T>(
     index: usize,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + IntoPy<PyObject>,
+    T: Element + Copy + for<'py> IntoPyObject<'py>,
 {
     let buffer = PyBuffer::<T>::get(source_ref)?;
     let slice = buffer
         .as_slice(py)
         .ok_or_else(|| PyTypeError::new_err("Failed to get buffer slice"))?;
-    Ok(slice[index].get().into_py(py))
+    slice[index].get().into_py_any(py)
 }
 
 /// Create an empty result array based on input type
@@ -47,7 +48,7 @@ pub(crate) fn create_empty_result_array(
     match input_type {
         InputType::NumPyArray => {
             // Create numpy array with same dtype
-            let numpy_module = PyModule::import_bound(py, "numpy")?;
+            let numpy_module = PyModule::import(py, "numpy")?;
             let numpy_array = numpy_module.getattr("array")?;
             // Map TypeCode to numpy dtype string
             let dtype_str = match typecode {
@@ -65,23 +66,23 @@ pub(crate) fn create_empty_result_array(
             let dtype = numpy_module.getattr("dtype")?.call1((dtype_str,))?;
             let empty_list = PyList::empty(py);
             let arr = numpy_array.call1((empty_list,))?;
-            Ok(arr.call_method1("astype", (dtype,))?.into_py(py))
+            Ok(arr.call_method1("astype", (dtype,))?.into())
         }
         InputType::ArrayArray | InputType::MemoryView => {
             // Create array.array
-            let array_module = PyModule::import_bound(py, "array")?;
+            let array_module = PyModule::import(py, "array")?;
             let array_type = array_module.getattr("array")?;
             let typecode_char = typecode.as_char();
             let empty_list = PyList::empty(py);
-            Ok(array_type.call1((typecode_char, empty_list))?.into_py(py))
+            Ok(array_type.call1((typecode_char, empty_list))?.into())
         }
         InputType::ArrowBuffer => {
             // Create empty Arrow array
-            let pyarrow_module = PyModule::import_bound(py, "pyarrow")?;
+            let pyarrow_module = PyModule::import(py, "pyarrow")?;
             let array_func = pyarrow_module.getattr("array")?;
             // Create empty list and convert to Arrow array
             let empty_list = PyList::empty(py);
-            Ok(array_func.call1((empty_list,))?.into_py(py))
+            Ok(array_func.call1((empty_list,))?.into())
         }
     }
 }
@@ -96,7 +97,7 @@ pub(crate) fn create_result_array_from_list(
     match input_type {
         InputType::NumPyArray => {
             // Create numpy array from list
-            let numpy_module = PyModule::import_bound(py, "numpy")?;
+            let numpy_module = PyModule::import(py, "numpy")?;
             let numpy_array = numpy_module.getattr("array")?;
             // Map TypeCode to numpy dtype string
             let dtype_str = match typecode {
@@ -113,21 +114,21 @@ pub(crate) fn create_result_array_from_list(
             };
             let dtype = numpy_module.getattr("dtype")?.call1((dtype_str,))?;
             let arr = numpy_array.call1((values,))?;
-            Ok(arr.call_method1("astype", (dtype,))?.into_py(py))
+            Ok(arr.call_method1("astype", (dtype,))?.into())
         }
         InputType::ArrayArray | InputType::MemoryView => {
             // Create array.array
-            let array_module = PyModule::import_bound(py, "array")?;
+            let array_module = PyModule::import(py, "array")?;
             let array_type = array_module.getattr("array")?;
             let typecode_char = typecode.as_char();
-            Ok(array_type.call1((typecode_char, values))?.into_py(py))
+            Ok(array_type.call1((typecode_char, values))?.into())
         }
         InputType::ArrowBuffer => {
             // Create Arrow array from list
-            let pyarrow_module = PyModule::import_bound(py, "pyarrow")?;
+            let pyarrow_module = PyModule::import(py, "pyarrow")?;
             let array_func = pyarrow_module.getattr("array")?;
             // Arrow arrays can be created from Python lists
-            Ok(array_func.call1((values,))?.into_py(py))
+            Ok(array_func.call1((values,))?.into())
         }
     }
 }
@@ -140,12 +141,12 @@ pub(crate) fn create_result_array_from_vec<T>(
     values: Vec<T>,
 ) -> PyResult<PyObject>
 where
-    T: Copy + IntoPy<PyObject>,
+    T: Copy + for<'py> IntoPyObject<'py>,
 {
     match input_type {
         InputType::NumPyArray => {
             // Create numpy array from Vec
-            let numpy_module = PyModule::import_bound(py, "numpy")?;
+            let numpy_module = PyModule::import(py, "numpy")?;
             let numpy_array = numpy_module.getattr("array")?;
             // Map TypeCode to numpy dtype string
             let dtype_str = match typecode {
@@ -162,27 +163,27 @@ where
             };
             let dtype = numpy_module.getattr("dtype")?.call1((dtype_str,))?;
             // Convert Vec to PyList once (much faster than incremental append)
-            let py_list = PyList::new(py, values.iter().map(|v| v.into_py(py)))?;
+            let py_list = PyList::new(py, values.iter().copied())?;
             let arr = numpy_array.call1((&py_list,))?;
-            Ok(arr.call_method1("astype", (dtype,))?.into_py(py))
+            Ok(arr.call_method1("astype", (dtype,))?.into())
         }
         InputType::ArrayArray | InputType::MemoryView => {
             // Create array.array from Vec
-            let array_module = PyModule::import_bound(py, "array")?;
+            let array_module = PyModule::import(py, "array")?;
             let array_type = array_module.getattr("array")?;
             let typecode_char = typecode.as_char();
             // Convert Vec to PyList once (much faster than incremental append)
-            let py_list = PyList::new(py, values.iter().map(|v| v.into_py(py)))?;
-            Ok(array_type.call1((typecode_char, &py_list))?.into_py(py))
+            let py_list = PyList::new(py, values.iter().copied())?;
+            Ok(array_type.call1((typecode_char, &py_list))?.into())
         }
         InputType::ArrowBuffer => {
             // Create Arrow array from Vec
-            let pyarrow_module = PyModule::import_bound(py, "pyarrow")?;
+            let pyarrow_module = PyModule::import(py, "pyarrow")?;
             let array_func = pyarrow_module.getattr("array")?;
             // Convert Vec to PyList once
-            let py_list = PyList::new(py, values.iter().map(|v| v.into_py(py)))?;
+            let py_list = PyList::new(py, values.iter().copied())?;
             // Arrow arrays can be created from Python lists
-            Ok(array_func.call1((&py_list,))?.into_py(py))
+            Ok(array_func.call1((&py_list,))?.into())
         }
     }
 }
@@ -197,7 +198,7 @@ pub(crate) fn create_slice_view_helper(
     end: usize,
 ) -> PyResult<PyObject> {
     // Create memoryview from array (zero-copy view)
-    let builtins = PyModule::import_bound(py, "builtins")?;
+    let builtins = PyModule::import(py, "builtins")?;
     let memoryview_type = builtins.getattr("memoryview")?;
     let full_view = memoryview_type.call1((array,))?;
 
@@ -207,7 +208,7 @@ pub(crate) fn create_slice_view_helper(
 
     // Call __getitem__ on the memoryview with the slice object
     let slice_obj = full_view.call_method1("__getitem__", (py_slice,))?;
-    Ok(slice_obj.into_py(py))
+    Ok(slice_obj.into())
 }
 
 // Parallel execution thresholds (lowered for better performance)

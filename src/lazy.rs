@@ -116,7 +116,7 @@ impl LazyArray {
                     filter_func.call1((current.clone_ref(py), predicate.clone_ref(py)))?
                 }
             };
-            current = result.to_object(py);
+            current = result.unbind();
         }
 
         // Cache the result
@@ -143,6 +143,6 @@ impl LazyArray {
         let arrayops_module = PyModule::import(py, "arrayops._arrayops")?;
         let array_iterator_func = arrayops_module.getattr("array_iterator")?;
         let iterator = array_iterator_func.call1((result,))?;
-        Ok(iterator.to_object(py))
+        Ok(iterator.unbind())
     }
 }

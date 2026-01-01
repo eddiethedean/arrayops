@@ -28,7 +28,7 @@ fn add_impl<T>(
     input_type: InputType,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + std::ops::Add<Output = T> + Send + Sync + IntoPy<PyObject>,
+    T: Element + Copy + std::ops::Add<Output = T> + Send + Sync + for<'py> IntoPyObject<'py>,
 {
     #[cfg(feature = "parallel")]
     {
@@ -71,7 +71,7 @@ fn multiply_impl<T>(
     input_type: InputType,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + std::ops::Mul<Output = T> + Send + Sync + IntoPy<PyObject>,
+    T: Element + Copy + std::ops::Mul<Output = T> + Send + Sync + for<'py> IntoPyObject<'py>,
 {
     #[cfg(feature = "parallel")]
     {
@@ -596,6 +596,18 @@ pub fn normalize(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<()> {
     // Extract min and max as f64
     let min_val: f64 = min_val_py.extract(py)?;
     let max_val: f64 = max_val_py.extract(py)?;
+
+    // Check for NaN or Infinity in min/max values
+    if min_val.is_nan() || max_val.is_nan() {
+        return Err(PyValueError::new_err(
+            "Cannot normalize array containing NaN values",
+        ));
+    }
+    if min_val.is_infinite() || max_val.is_infinite() {
+        return Err(PyValueError::new_err(
+            "Cannot normalize array containing Infinity values",
+        ));
+    }
 
     // Check if min == max (all values are the same)
     if (max_val - min_val).abs() < f64::EPSILON {

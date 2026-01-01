@@ -148,7 +148,7 @@ The following require MAJOR versions (breaking changes):
 
 ### From 0.x to 1.0.0
 
-See [MIGRATION.md](MIGRATION.md) for detailed migration guide.
+See [MIGRATION.md](https://github.com/eddiethedean/arrayops/blob/main/MIGRATION.md) for detailed migration guide.
 
 Key points:
 - No breaking changes from 0.4.x to 1.0.0
@@ -174,5 +174,5 @@ When migrating to future versions:
 For questions about API stability or migration:
 - GitHub Issues: Report concerns or questions
 - Documentation: Check migration guides and changelog
-- Security: See [SECURITY.md](../SECURITY.md) for security-related API considerations
+- Security: See [SECURITY.md](https://github.com/eddiethedean/arrayops/blob/main/SECURITY.md) for security-related API considerations
 

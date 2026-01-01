@@ -45,7 +45,7 @@ def benchmark_scale(size):
     # NumPy vectorized
     arr_np = np.array(values, dtype=np.int32)
     start = time.perf_counter()
-    result = arr_np * 2
+    _ = arr_np * 2
     numpy_time = (time.perf_counter() - start) * 1000
 
     # Array + arrayops scale
@@ -65,13 +65,13 @@ def benchmark_map(size):
     arr_np = np.array(values, dtype=np.int32)
     func = np.vectorize(lambda x: x * 2)
     start = time.perf_counter()
-    result = func(arr_np)
+    _ = func(arr_np)
     numpy_time = (time.perf_counter() - start) * 1000
 
     # Array + arrayops map
     arr_ao = array.array("i", values)
     start = time.perf_counter()
-    result = ao.map(arr_ao, lambda x: x * 2)
+    _ = ao.map(arr_ao, lambda x: x * 2)
     arrayops_time = (time.perf_counter() - start) * 1000
 
     return numpy_time, arrayops_time
@@ -84,13 +84,13 @@ def benchmark_filter(size):
     # NumPy boolean indexing
     arr_np = np.array(values, dtype=np.int32)
     start = time.perf_counter()
-    result = arr_np[arr_np % 2 == 0]
+    _ = arr_np[arr_np % 2 == 0]
     numpy_time = (time.perf_counter() - start) * 1000
 
     # Array + arrayops filter
     arr_ao = array.array("i", values)
     start = time.perf_counter()
-    result = ao.filter(arr_ao, lambda x: x % 2 == 0)
+    _ = ao.filter(arr_ao, lambda x: x % 2 == 0)
     arrayops_time = (time.perf_counter() - start) * 1000
 
     return numpy_time, arrayops_time
@@ -103,13 +103,13 @@ def benchmark_mean(size):
     # NumPy
     arr_np = np.array(values, dtype=np.int32)
     start = time.perf_counter()
-    result = np.mean(arr_np)
+    _ = np.mean(arr_np)
     numpy_time = (time.perf_counter() - start) * 1000
 
     # Array + arrayops
     arr_ao = array.array("i", values)
     start = time.perf_counter()
-    result = ao.mean(arr_ao)
+    _ = ao.mean(arr_ao)
     arrayops_time = (time.perf_counter() - start) * 1000
 
     return numpy_time, arrayops_time
@@ -122,13 +122,13 @@ def benchmark_std(size):
     # NumPy
     arr_np = np.array(values, dtype=np.int32)
     start = time.perf_counter()
-    result = np.std(arr_np)
+    _ = np.std(arr_np)
     numpy_time = (time.perf_counter() - start) * 1000
 
     # Array + arrayops
     arr_ao = array.array("i", values)
     start = time.perf_counter()
-    result = ao.std(arr_ao)
+    _ = ao.std(arr_ao)
     arrayops_time = (time.perf_counter() - start) * 1000
 
     return numpy_time, arrayops_time

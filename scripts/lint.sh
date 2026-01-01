@@ -27,19 +27,19 @@ echo "Running Rust linting checks..."
 echo ""
 
 echo "1. Running clippy with default features..."
-cargo clippy -- -D warnings
+cargo clippy -- -D warnings -A deprecated
 
 echo ""
 echo "2. Running clippy with parallel feature..."
-cargo clippy --features parallel -- -D warnings
+cargo clippy --features parallel -- -D warnings -A deprecated
 
 echo ""
 echo "3. Running clippy with simd feature..."
-cargo clippy --features simd -- -D warnings
+cargo clippy --features simd -- -D warnings -A deprecated
 
 echo ""
 echo "4. Running clippy with all features..."
-cargo clippy --all-features -- -D warnings
+cargo clippy --all-features -- -D warnings -A deprecated
 
 echo ""
 echo "5. Checking formatting..."

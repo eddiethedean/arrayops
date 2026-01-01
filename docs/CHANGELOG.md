@@ -8,16 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- See [ROADMAP.md](ROADMAP.md) for details.
+- See [roadmap](roadmap) for details.
 
 ## [1.0.0] - 2025-01-01
 
 ### Added
 - Production-ready 1.0.0 release
-- API stability guarantees documented (see [API_STABILITY.md](API_STABILITY.md))
+- API stability guarantees documented (see [API_STABILITY.md](../API_STABILITY.md))
 - Comprehensive security documentation
-- Migration guide from 0.x to 1.0.0 (see [MIGRATION.md](../MIGRATION.md))
-- Deprecation tracking and migration plans (see [DEPRECATION_NOTES.md](DEPRECATION_NOTES.md))
+- Migration guide from 0.x to 1.0.0 (see [MIGRATION.md](https://github.com/eddiethedean/arrayops/blob/main/MIGRATION.md))
+- Deprecation tracking and migration plans (see [DEPRECATION_NOTES.md](../DEPRECATION_NOTES.md))
 
 ### Changed
 - Development status updated from "Alpha" to "Production/Stable"
@@ -60,8 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Notes
 - No breaking changes from 0.4.x to 1.0.0
 - All 0.4.x code should work unchanged
-- See [MIGRATION.md](../MIGRATION.md) for migration guidance
-- See [API_STABILITY.md](API_STABILITY.md) for API stability guarantees
+- See [MIGRATION.md](https://github.com/eddiethedean/arrayops/blob/main/MIGRATION.md) for migration guidance
+- See [API_STABILITY.md](../API_STABILITY.md) for API stability guarantees
 
 ## [0.3.0] - 2024-01-XX
 

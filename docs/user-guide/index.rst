@@ -8,4 +8,7 @@ User Guide
    examples
    performance
    troubleshooting
+   ../comparison-numpy
+   ../comparison-polars
+   ../comparison-lists
 

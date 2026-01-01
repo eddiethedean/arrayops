@@ -2,6 +2,7 @@ use pyo3::buffer::{Element, PyBuffer};
 use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
+use pyo3::IntoPyObjectExt;
 
 use crate::buffer::{create_empty_result_array, create_result_array_from_list, get_array_len};
 use crate::types::TypeCode;
@@ -18,7 +19,7 @@ fn map_impl<T>(
     input_type: InputType,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + IntoPy<PyObject>,
+    T: Element + Copy + for<'py> IntoPyObject<'py>,
 {
     let slice = buffer
         .as_slice(py)
@@ -28,7 +29,7 @@ where
 
     for cell in slice.iter() {
         let value = cell.get();
-        let value_obj = value.into_py(py);
+        let value_obj = value.into_py_any(py)?;
         let result = callable.call1((value_obj,))?;
         result_list.append(result).unwrap();
     }
@@ -61,7 +62,7 @@ fn map_inplace_impl<T>(
     callable: &Bound<'_, PyAny>,
 ) -> PyResult<()>
 where
-    T: Element + Copy + IntoPy<PyObject> + for<'a> pyo3::FromPyObject<'a>,
+    T: Element + Copy + for<'py> IntoPyObject<'py> + for<'a> pyo3::FromPyObject<'a>,
 {
     let slice = buffer
         .as_mut_slice(py)
@@ -69,7 +70,7 @@ where
 
     for item in slice.iter() {
         let value = item.get();
-        let value_obj = value.into_py(py);
+        let value_obj = value.into_py_any(py)?;
         let result = callable.call1((value_obj,))?;
         let result_value: T = result.extract()?;
         item.set(result_value);
@@ -105,7 +106,7 @@ fn filter_impl<T>(
     input_type: InputType,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + IntoPy<PyObject>,
+    T: Element + Copy + for<'py> IntoPyObject<'py>,
 {
     let slice = buffer
         .as_slice(py)
@@ -115,7 +116,7 @@ where
 
     for cell in slice.iter() {
         let value = cell.get();
-        let value_obj = value.into_py(py);
+        let value_obj = value.into_py_any(py)?;
         let result = predicate.call1((value_obj.clone_ref(py),))?;
         let should_include: bool = result.extract()?;
         if should_include {
@@ -152,7 +153,7 @@ fn reduce_impl<T>(
     initial: Option<PyObject>,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + IntoPy<PyObject>,
+    T: Element + Copy + for<'py> IntoPyObject<'py>,
 {
     let slice = buffer
         .as_slice(py)
@@ -173,14 +174,14 @@ where
         Some(init) => (init, 0),
         None => {
             let first = slice.iter().next().unwrap().get();
-            (first.into_py(py), 1)
+            (first.into_py_any(py)?, 1)
         }
     };
     for cell in slice.iter().skip(start_idx) {
         let value = cell.get();
-        let value_obj = value.into_py(py);
+        let value_obj = value.into_py_any(py)?;
         let result = r#fn.call1((acc, value_obj))?;
-        acc = result.into_py(py);
+        acc = result.into_py_any(py)?;
     }
 
     Ok(acc)

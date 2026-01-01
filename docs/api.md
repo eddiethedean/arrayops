@@ -8,7 +8,7 @@ Complete API documentation for the `arrayops` package.
 
 ### Security Considerations
 
-All arrayops functions perform comprehensive input validation and use Rust's memory safety guarantees. For detailed security information, see the [Security Documentation](security.md). Key security points:
+All arrayops functions perform comprehensive input validation and use Rust's memory safety guarantees. For detailed security information, see the [Security Documentation](../security.md). Key security points:
 
 - **Input validation**: All inputs are validated (type, typecode, properties) before processing
 - **Memory safety**: Rust's compile-time memory safety prevents buffer overflows and use-after-free
@@ -1261,6 +1261,6 @@ for value in lazy:
 
 - [Examples and Cookbook](examples.md) - Practical usage examples
 - [Performance Guide](performance.md) - Performance analysis and optimization
-- [Design Document](design.md) - Architecture and implementation details
+- [Design Document](../design.md) - Architecture and implementation details
 - [Troubleshooting](troubleshooting.md) - Common issues and solutions
 

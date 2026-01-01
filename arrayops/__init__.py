@@ -54,7 +54,7 @@ Example:
     [2, 4, 6, 8, 10]
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 # Import from organized submodules
 try:

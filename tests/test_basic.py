@@ -268,7 +268,7 @@ class TestModuleInitialization:
         assert "reverse" in arrayops.__all__
         assert "sort" in arrayops.__all__
         assert "unique" in arrayops.__all__
-        assert arrayops.__version__ == "1.0.0"
+        assert arrayops.__version__ == "1.0.1"
 
     def test_module_import_error_with_arrayops_in_message(self):
         """Test helpful error message when _arrayops module is missing."""
@@ -1439,6 +1439,15 @@ class TestStatisticalOperations:
         result = arrayops.median(arr)
         # Sorted: [1.1, 2.2, 5.5, 8.8, 9.9], median = 5.5
         assert abs(result - 5.5) < 1e-10
+
+    def test_median_float64_even(self):
+        """Test median with even-length float64 array (returns lower median)."""
+        import arrayops
+
+        arr = array.array("d", [5.5, 2.2, 8.8, 1.1])
+        result = arrayops.median(arr)
+        # Sorted: [1.1, 2.2, 5.5, 8.8], lower median = 2.2
+        assert abs(result - 2.2) < 1e-10
 
     def test_median_empty(self):
         """Test median with empty array raises ValueError."""

@@ -342,7 +342,7 @@ Include:
 
 - **GitHub Issues**: [Report bugs](https://github.com/your-username/arrayops/issues)
 - **GitHub Discussions**: [Ask questions](https://github.com/your-username/arrayops/discussions)
-- **Documentation**: See [docs/README.md](README.md)
+- **Documentation**: See [docs/README.md](../README.md)
 
 ## Common Patterns
 
@@ -377,7 +377,7 @@ maturin develop
 
 ## Related Documentation
 
-- [Development Guide](development.md) - Development setup
+- [Development Guide](../development.md) - Development setup
 - [API Reference](api.md) - API documentation
 - [Examples](examples.md) - Usage examples
 

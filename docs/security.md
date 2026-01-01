@@ -254,7 +254,7 @@ If you discover a security vulnerability, please report it responsibly:
 3. Include details about the vulnerability, impact, and steps to reproduce
 4. Allow time for the maintainer to address the issue before public disclosure
 
-See [SECURITY.md](../SECURITY.md) for full details on the security reporting process.
+See [SECURITY.md](https://github.com/eddiethedean/arrayops/blob/main/SECURITY.md) for full details on the security reporting process.
 
 ## Security Updates
 
@@ -291,7 +291,7 @@ Stay informed about security updates by:
 
 ## Additional Resources
 
-- [SECURITY.md](../SECURITY.md): Security policy and reporting process
+- [SECURITY.md](https://github.com/eddiethedean/arrayops/blob/main/SECURITY.md): Security policy and reporting process
 - [Developer Security Guide](developer-guide/security.md): Security guidelines for contributors
 - [Design Document](design.md#7-safety-guarantees): Architecture and safety guarantees
 - [PyO3 Documentation](https://pyo3.rs/): Rust-Python interop security considerations

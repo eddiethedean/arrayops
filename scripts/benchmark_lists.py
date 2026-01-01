@@ -39,7 +39,7 @@ def benchmark_scale(size):
     # List comprehension
     my_list = list(values)
     start = time.perf_counter()
-    result = [x * 2 for x in my_list]
+    _ = [x * 2 for x in my_list]
     list_time = (time.perf_counter() - start) * 1000
 
     # Array + arrayops scale
@@ -58,13 +58,13 @@ def benchmark_map(size):
     # List comprehension
     my_list = list(values)
     start = time.perf_counter()
-    result = [x * 2 for x in my_list]
+    _ = [x * 2 for x in my_list]
     list_time = (time.perf_counter() - start) * 1000
 
     # Array + arrayops map
     my_array = array.array("i", values)
     start = time.perf_counter()
-    result = ao.map(my_array, lambda x: x * 2)
+    _ = ao.map(my_array, lambda x: x * 2)
     array_time = (time.perf_counter() - start) * 1000
 
     return list_time, array_time
@@ -77,13 +77,13 @@ def benchmark_filter(size):
     # List comprehension
     my_list = list(values)
     start = time.perf_counter()
-    result = [x for x in my_list if x % 2 == 0]
+    _ = [x for x in my_list if x % 2 == 0]
     list_time = (time.perf_counter() - start) * 1000
 
     # Array + arrayops filter
     my_array = array.array("i", values)
     start = time.perf_counter()
-    result = ao.filter(my_array, lambda x: x % 2 == 0)
+    _ = ao.filter(my_array, lambda x: x % 2 == 0)
     array_time = (time.perf_counter() - start) * 1000
 
     return list_time, array_time
@@ -96,13 +96,13 @@ def benchmark_reduce(size):
     # List with functools.reduce
     my_list = list(range(1, size + 1))
     start = time.perf_counter()
-    result = reduce(lambda acc, x: acc * x, my_list, 1)
+    _ = reduce(lambda acc, x: acc * x, my_list, 1)
     list_time = (time.perf_counter() - start) * 1000
 
     # Array + arrayops reduce
     my_array = array.array("i", range(1, size + 1))
     start = time.perf_counter()
-    result = ao.reduce(my_array, lambda acc, x: acc * x, initial=1)
+    _ = ao.reduce(my_array, lambda acc, x: acc * x, initial=1)
     array_time = (time.perf_counter() - start) * 1000
 
     return list_time, array_time

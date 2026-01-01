@@ -1,6 +1,7 @@
 use pyo3::buffer::{Element, PyBuffer};
 use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
+use pyo3::IntoPyObjectExt;
 
 use crate::buffer::{get_array_len, get_itemsize};
 use crate::operations::basic;
@@ -190,7 +191,9 @@ where
     data.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
     // Return middle element (lower median for even length)
-    let mid = data.len() / 2;
+    // For even length: return element at (len-1)/2 (lower median)
+    // For odd length: return element at (len-1)/2 (middle element)
+    let mid = (data.len() - 1) / 2;
     Ok(data[mid])
 }
 
@@ -211,66 +214,66 @@ pub fn median(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<PyObject> {
         TypeCode::Int8 => {
             let buffer = PyBuffer::<i8>::get(array)?;
             let result = median_impl_int(py, &buffer)?;
-            Ok(result.into_py(py))
+            result.into_py_any(py)
         }
         TypeCode::Int16 => {
             let buffer = PyBuffer::<i16>::get(array)?;
             let result = median_impl_int(py, &buffer)?;
-            Ok(result.into_py(py))
+            result.into_py_any(py)
         }
         TypeCode::Int32 => {
             let buffer = PyBuffer::<i32>::get(array)?;
             let result = median_impl_int(py, &buffer)?;
-            Ok(result.into_py(py))
+            result.into_py_any(py)
         }
         TypeCode::Int64 => {
             let itemsize = get_itemsize(array)?;
             if itemsize == 4 {
                 let buffer = PyBuffer::<i32>::get(array)?;
                 let result = median_impl_int(py, &buffer)?;
-                Ok(result.into_py(py))
+                result.into_py_any(py)
             } else {
                 let buffer = PyBuffer::<i64>::get(array)?;
                 let result = median_impl_int(py, &buffer)?;
-                Ok(result.into_py(py))
+                result.into_py_any(py)
             }
         }
         TypeCode::UInt8 => {
             let buffer = PyBuffer::<u8>::get(array)?;
             let result = median_impl_int(py, &buffer)?;
-            Ok(result.into_py(py))
+            result.into_py_any(py)
         }
         TypeCode::UInt16 => {
             let buffer = PyBuffer::<u16>::get(array)?;
             let result = median_impl_int(py, &buffer)?;
-            Ok(result.into_py(py))
+            result.into_py_any(py)
         }
         TypeCode::UInt32 => {
             let buffer = PyBuffer::<u32>::get(array)?;
             let result = median_impl_int(py, &buffer)?;
-            Ok(result.into_py(py))
+            result.into_py_any(py)
         }
         TypeCode::UInt64 => {
             let itemsize = get_itemsize(array)?;
             if itemsize == 4 {
                 let buffer = PyBuffer::<u32>::get(array)?;
                 let result = median_impl_int(py, &buffer)?;
-                Ok(result.into_py(py))
+                result.into_py_any(py)
             } else {
                 let buffer = PyBuffer::<u64>::get(array)?;
                 let result = median_impl_int(py, &buffer)?;
-                Ok(result.into_py(py))
+                result.into_py_any(py)
             }
         }
         TypeCode::Float32 => {
             let buffer = PyBuffer::<f32>::get(array)?;
             let result = median_impl_float(py, &buffer)?;
-            Ok(result.into_py(py))
+            result.into_py_any(py)
         }
         TypeCode::Float64 => {
             let buffer = PyBuffer::<f64>::get(array)?;
             let result = median_impl_float(py, &buffer)?;
-            Ok(result.into_py(py))
+            result.into_py_any(py)
         }
     }
 }

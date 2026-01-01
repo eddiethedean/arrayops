@@ -18,7 +18,7 @@ pub enum InputType {
 pub(crate) fn detect_input_type(obj: &Bound<'_, PyAny>) -> PyResult<InputType> {
     let py = obj.py();
     // Check array.array first (maintain backward compatibility)
-    let module = PyModule::import_bound(py, "array")?;
+    let module = PyModule::import(py, "array")?;
     if let Ok(array_type) = module.getattr("array") {
         if obj.is_instance(&array_type)? {
             return Ok(InputType::ArrayArray);
@@ -26,7 +26,7 @@ pub(crate) fn detect_input_type(obj: &Bound<'_, PyAny>) -> PyResult<InputType> {
     }
 
     // Check numpy.ndarray (graceful handling if NumPy not available)
-    if let Ok(numpy_module) = PyModule::import_bound(py, "numpy") {
+    if let Ok(numpy_module) = PyModule::import(py, "numpy") {
         if let Ok(ndarray_type) = numpy_module.getattr("ndarray") {
             if obj.is_instance(&ndarray_type)? {
                 return Ok(InputType::NumPyArray);
@@ -36,7 +36,7 @@ pub(crate) fn detect_input_type(obj: &Bound<'_, PyAny>) -> PyResult<InputType> {
 
     // Check memoryview (built-in type)
     // Use Python's builtins to get memoryview type
-    let builtins = PyModule::import_bound(py, "builtins")?;
+    let builtins = PyModule::import(py, "builtins")?;
     if let Ok(memoryview_type) = builtins.getattr("memoryview") {
         if obj.is_instance(&memoryview_type)? {
             return Ok(InputType::MemoryView);
@@ -44,7 +44,7 @@ pub(crate) fn detect_input_type(obj: &Bound<'_, PyAny>) -> PyResult<InputType> {
     }
 
     // Check for Arrow buffer/array (pyarrow.Buffer or pyarrow.Array)
-    if let Ok(pyarrow_module) = PyModule::import_bound(py, "pyarrow") {
+    if let Ok(pyarrow_module) = PyModule::import(py, "pyarrow") {
         // Check for Buffer
         if let Ok(buffer_type) = pyarrow_module.getattr("Buffer") {
             if obj.is_instance(&buffer_type)? {
@@ -86,7 +86,7 @@ pub(crate) fn get_typecode_unified(
 /// Validate that the input is an array.array
 pub(crate) fn validate_array_array(array: &Bound<'_, PyAny>) -> PyResult<()> {
     let py = array.py();
-    let module = PyModule::import_bound(py, "array")?;
+    let module = PyModule::import(py, "array")?;
     let array_type = module.getattr("array")?;
     if !array.is_instance(&array_type)? {
         return Err(PyTypeError::new_err(
@@ -100,7 +100,7 @@ pub(crate) fn validate_array_array(array: &Bound<'_, PyAny>) -> PyResult<()> {
 pub(crate) fn validate_numpy_array(arr: &Bound<'_, PyAny>) -> PyResult<()> {
     let py = arr.py();
     // Check if it's a numpy array (should already be detected, but double-check)
-    let numpy_module = PyModule::import_bound(py, "numpy")?;
+    let numpy_module = PyModule::import(py, "numpy")?;
     let ndarray_type = numpy_module.getattr("ndarray")?;
     if !arr.is_instance(&ndarray_type)? {
         return Err(PyTypeError::new_err("Expected numpy.ndarray"));
@@ -132,7 +132,7 @@ pub(crate) fn validate_numpy_array(arr: &Bound<'_, PyAny>) -> PyResult<()> {
 pub(crate) fn validate_memoryview(mv: &Bound<'_, PyAny>) -> PyResult<()> {
     let py = mv.py();
     // Check if it's a memoryview (should already be detected, but double-check)
-    let builtins = PyModule::import_bound(py, "builtins")?;
+    let builtins = PyModule::import(py, "builtins")?;
     let memoryview_type = builtins.getattr("memoryview")?;
     if !mv.is_instance(&memoryview_type)? {
         return Err(PyTypeError::new_err("Expected memoryview"));
@@ -150,7 +150,7 @@ pub(crate) fn is_memoryview_writable(mv: &Bound<'_, PyAny>) -> PyResult<bool> {
 pub(crate) fn validate_arrow_buffer(arrow_obj: &Bound<'_, PyAny>) -> PyResult<()> {
     let py = arrow_obj.py();
     // Check if it's an Arrow object (should already be detected, but double-check)
-    if let Ok(pyarrow_module) = PyModule::import_bound(py, "pyarrow") {
+    if let Ok(pyarrow_module) = PyModule::import(py, "pyarrow") {
         let is_buffer = pyarrow_module
             .getattr("Buffer")
             .and_then(|t| arrow_obj.is_instance(&t))

@@ -254,7 +254,7 @@ fn unique_impl_int<T>(
     input_type: InputType,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + Ord + Send + Sync + IntoPy<PyObject>,
+    T: Element + Copy + Ord + Send + Sync + for<'py> IntoPyObject<'py>,
 {
     let slice = buffer
         .as_slice(py)
@@ -267,7 +267,7 @@ where
 
     let result_list = PyList::empty(py);
     for val in data {
-        result_list.append(val.into_py(py))?;
+        result_list.append(val)?;
     }
 
     create_result_array_from_list(py, typecode, input_type, &result_list)
@@ -280,7 +280,7 @@ fn unique_impl_float<T>(
     input_type: InputType,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + PartialOrd + Send + Sync + IntoPy<PyObject>,
+    T: Element + Copy + PartialOrd + Send + Sync + for<'py> IntoPyObject<'py>,
 {
     let slice = buffer
         .as_slice(py)
@@ -293,7 +293,7 @@ where
 
     let result_list = PyList::empty(py);
     for val in data {
-        result_list.append(val.into_py(py))?;
+        result_list.append(val)?;
     }
 
     create_result_array_from_list(py, typecode, input_type, &result_list)

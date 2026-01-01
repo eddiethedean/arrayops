@@ -351,7 +351,7 @@ with open('benchmark_results.json', 'w') as f:
 2. **Parallel Execution**: Multi-threaded processing for large arrays
 3. **Specialized Kernels**: Optimized code paths for common patterns
 
-See [ROADMAP.md](ROADMAP.md) for details.
+See [ROADMAP.md](../ROADMAP.md) for details.
 
 ## Profiling
 
@@ -401,5 +401,5 @@ Use platform-specific profilers:
 
 - [API Reference](api.md) - Function documentation
 - [Examples](examples.md) - Usage examples
-- [Design Document](design.md) - Architecture details
+- [Design Document](../design.md) - Architecture details
 
