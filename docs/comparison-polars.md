@@ -39,16 +39,16 @@ Arrays have the lowest overhead for pure 1D numeric data.
 
 ### Performance Benchmarks
 
-*Benchmark results vary significantly by system, Python version, and library versions. The following are representative values from macOS ARM64, Python 3.12. Use `scripts/benchmark_polars.py` to run benchmarks on your system.*
+*Benchmark results vary significantly by system, Python version, and library versions. The following are actual values from macOS ARM64, Python 3.12.11. Use `scripts/benchmark_polars.py` to run benchmarks on your system.*
 
-| Operation | Size | Polars Series | arrayops | Ratio |
-|-----------|------|---------------|----------|-------|
-| Sum | 1M | 0.312 ms | 7.519 ms | 24x faster |
-| Scale (multiply) | 1M | 0.425 ms | 4.763 ms | 11x faster |
-| Mean | 1M | 0.335 ms | 7.132 ms | 21x faster |
-| Filter | 1M | 3.521 ms | 204.230 ms | 58x faster |
+| Operation | Size | Polars Series | arrayops | Winner |
+|-----------|------|---------------|----------|--------|
+| Sum | 1M | 0.077 ms | 7.039 ms | **Polars** (91x faster) |
+| Scale (multiply) | 1M | 0.126 ms | 4.792 ms | **Polars** (38x faster) |
+| Mean | 1M | 0.070 ms | 6.979 ms | **Polars** (100x faster) |
+| Filter | 1M | 0.078 ms | 121.002 ms | **Polars** (1551x faster) |
 
-**Polars is significantly faster** for vectorized operations, especially expression-based filtering. **arrayops advantages**: native Python callable support (map/filter with lambdas), simpler API, zero dependencies.
+**Polars is faster** for all measured operations, especially filtering (expression-based vs Python callable overhead). **arrayops advantages**: native Python callable support (map/filter with lambdas), simpler API, zero dependencies, better memory efficiency.
 
 ### Features
 
