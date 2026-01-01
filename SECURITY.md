@@ -1,13 +1,17 @@
 # Security Policy
 
+**Last Updated**: 2025-01-01 (arrayops 1.0.0)
+
 ## Supported Versions
 
-We actively maintain and provide security updates for the following versions:
+arrayops follows semantic versioning and provides security updates for:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.4.x   | :white_check_mark: |
-| < 0.4   | :x:                |
+| Version | Supported          | Status |
+| ------- | ------------------ | -------|
+| 1.0.x   | :white_check_mark: | Current stable |
+| < 1.0.0 | :x:                | Alpha versions - upgrade recommended |
+
+**Production Use**: We recommend using arrayops 1.0.0 or later for production deployments. Alpha versions (0.x) may have security issues that have been addressed in 1.0.0.
 
 ## Reporting a Vulnerability
 
@@ -115,5 +119,5 @@ For general questions, please use GitHub Discussions or Issues.
 
 ---
 
-_Last updated: 2024_
+_Last updated: 2025-01-01 (arrayops 1.0.0)_
 
