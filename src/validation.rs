@@ -71,7 +71,10 @@ pub(crate) fn detect_input_type(obj: &Bound<'_, PyAny>) -> PyResult<InputType> {
 }
 
 /// Get typecode from unified input (array.array, numpy.ndarray, memoryview, or Arrow buffer/array)
-pub(crate) fn get_typecode_unified(obj: &Bound<'_, PyAny>, input_type: InputType) -> PyResult<TypeCode> {
+pub(crate) fn get_typecode_unified(
+    obj: &Bound<'_, PyAny>,
+    input_type: InputType,
+) -> PyResult<TypeCode> {
     match input_type {
         InputType::ArrayArray => get_typecode(obj),
         InputType::NumPyArray => get_numpy_typecode(obj),

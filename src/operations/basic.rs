@@ -5,14 +5,15 @@ use pyo3::prelude::*;
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
+use crate::buffer::{get_array_len, get_itemsize, CACHE_BLOCK_SIZE};
 use crate::types::TypeCode;
-use crate::validation::{detect_input_type, validate_for_operation, get_typecode_unified};
-use crate::buffer::{
-    get_array_len, get_itemsize, CACHE_BLOCK_SIZE,
-};
+use crate::validation::{detect_input_type, get_typecode_unified, validate_for_operation};
 
 #[cfg(feature = "parallel")]
-use crate::buffer::{extract_buffer_to_vec, should_parallelize, PARALLEL_THRESHOLD_SUM, PARALLEL_THRESHOLD_SCALE, PARALLEL_THRESHOLD_MEAN, PARALLEL_THRESHOLD_MINMAX};
+use crate::buffer::{
+    extract_buffer_to_vec, should_parallelize, PARALLEL_THRESHOLD_MEAN, PARALLEL_THRESHOLD_MINMAX,
+    PARALLEL_THRESHOLD_SCALE, PARALLEL_THRESHOLD_SUM,
+};
 
 // Generic sum implementation with cache-friendly processing
 fn sum_impl<T>(py: Python<'_>, buffer: &PyBuffer<T>, len: usize) -> PyResult<T>

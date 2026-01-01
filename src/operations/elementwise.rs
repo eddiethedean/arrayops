@@ -218,7 +218,11 @@ pub fn add(py: Python<'_>, arr1: &Bound<'_, PyAny>, arr2: &Bound<'_, PyAny>) -> 
 }
 
 #[pyfunction]
-pub fn multiply(py: Python<'_>, arr1: &Bound<'_, PyAny>, arr2: &Bound<'_, PyAny>) -> PyResult<PyObject> {
+pub fn multiply(
+    py: Python<'_>,
+    arr1: &Bound<'_, PyAny>,
+    arr2: &Bound<'_, PyAny>,
+) -> PyResult<PyObject> {
     let input_type1 = detect_input_type(arr1)?;
     validate_for_operation(arr1, input_type1, false)?;
     let typecode1 = get_typecode_unified(arr1, input_type1)?;

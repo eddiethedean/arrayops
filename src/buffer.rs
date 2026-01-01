@@ -73,9 +73,7 @@ pub(crate) fn create_empty_result_array(
             let array_type = array_module.getattr("array")?;
             let typecode_char = typecode.as_char();
             let empty_list = PyList::empty(py);
-            Ok(array_type
-                .call1((typecode_char, empty_list))?
-                .into_py(py))
+            Ok(array_type.call1((typecode_char, empty_list))?.into_py(py))
         }
         InputType::ArrowBuffer => {
             // Create empty Arrow array

@@ -55,7 +55,11 @@ pub fn map(py: Python<'_>, array: &Bound<'_, PyAny>, r#fn: PyObject) -> PyResult
 }
 
 // Generic map_inplace implementation
-fn map_inplace_impl<T>(py: Python<'_>, buffer: &mut PyBuffer<T>, callable: &Bound<'_, PyAny>) -> PyResult<()>
+fn map_inplace_impl<T>(
+    py: Python<'_>,
+    buffer: &mut PyBuffer<T>,
+    callable: &Bound<'_, PyAny>,
+) -> PyResult<()>
 where
     T: Element + Copy + IntoPy<PyObject> + for<'a> pyo3::FromPyObject<'a>,
 {
