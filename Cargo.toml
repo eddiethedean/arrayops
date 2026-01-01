@@ -15,7 +15,7 @@ lto = "fat"
 codegen-units = 1
 
 [dependencies]
-pyo3 = { version = "0.20", features = ["extension-module"] }
+pyo3 = { version = "0.24", features = ["extension-module"] }
 
 [features]
 default = []

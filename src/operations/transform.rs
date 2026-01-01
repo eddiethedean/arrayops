@@ -11,14 +11,14 @@ use crate::validation::{
 
 // Generic map implementation (returns new array)
 fn map_impl<T>(
-    py: Python,
+    py: Python<'_>,
     buffer: &PyBuffer<T>,
-    callable: &PyAny,
+    callable: &Bound<'_, PyAny>,
     typecode: TypeCode,
     input_type: InputType,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + pyo3::ToPyObject,
+    T: Element + Copy + IntoPy<PyObject>,
 {
     let slice = buffer
         .as_slice(py)
@@ -28,21 +28,21 @@ where
 
     for cell in slice.iter() {
         let value = cell.get();
-        let value_obj = value.to_object(py);
+        let value_obj = value.into_py(py);
         let result = callable.call1((value_obj,))?;
-        result_list.append(result)?;
+        result_list.append(result).unwrap();
     }
 
-    create_result_array_from_list(py, typecode, input_type, result_list)
+    create_result_array_from_list(py, typecode, input_type, &result_list)
 }
 
 /// Map operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn map(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<PyObject> {
+pub fn map(py: Python<'_>, array: &Bound<'_, PyAny>, r#fn: PyObject) -> PyResult<PyObject> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, false)?;
     let typecode = get_typecode_unified(array, input_type)?;
-    let callable = r#fn.as_ref(py);
+    let callable = r#fn.bind(py);
 
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
@@ -55,9 +55,9 @@ pub fn map(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<PyObject> {
 }
 
 // Generic map_inplace implementation
-fn map_inplace_impl<T>(py: Python, buffer: &mut PyBuffer<T>, callable: &PyAny) -> PyResult<()>
+fn map_inplace_impl<T>(py: Python<'_>, buffer: &mut PyBuffer<T>, callable: &Bound<'_, PyAny>) -> PyResult<()>
 where
-    T: Element + Copy + pyo3::ToPyObject + for<'a> pyo3::FromPyObject<'a>,
+    T: Element + Copy + IntoPy<PyObject> + for<'a> pyo3::FromPyObject<'a>,
 {
     let slice = buffer
         .as_mut_slice(py)
@@ -65,7 +65,7 @@ where
 
     for item in slice.iter() {
         let value = item.get();
-        let value_obj = value.to_object(py);
+        let value_obj = value.into_py(py);
         let result = callable.call1((value_obj,))?;
         let result_value: T = result.extract()?;
         item.set(result_value);
@@ -76,11 +76,11 @@ where
 
 /// Map in-place operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn map_inplace(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<()> {
+pub fn map_inplace(py: Python<'_>, array: &Bound<'_, PyAny>, r#fn: PyObject) -> PyResult<()> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, true)?;
     let typecode = get_typecode_unified(array, input_type)?;
-    let callable = r#fn.as_ref(py);
+    let callable = r#fn.bind(py);
 
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
@@ -94,14 +94,14 @@ pub fn map_inplace(py: Python, array: &PyAny, r#fn: PyObject) -> PyResult<()> {
 
 // Generic filter implementation
 fn filter_impl<T>(
-    py: Python,
+    py: Python<'_>,
     buffer: &PyBuffer<T>,
-    predicate: &PyAny,
+    predicate: &Bound<'_, PyAny>,
     typecode: TypeCode,
     input_type: InputType,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + pyo3::ToPyObject,
+    T: Element + Copy + IntoPy<PyObject>,
 {
     let slice = buffer
         .as_slice(py)
@@ -111,24 +111,24 @@ where
 
     for cell in slice.iter() {
         let value = cell.get();
-        let value_obj = value.to_object(py);
-        let result = predicate.call1((value_obj.clone(),))?;
+        let value_obj = value.into_py(py);
+        let result = predicate.call1((value_obj.clone_ref(py),))?;
         let should_include: bool = result.extract()?;
         if should_include {
-            result_list.append(value_obj)?;
+            result_list.append(value_obj).unwrap();
         }
     }
 
-    create_result_array_from_list(py, typecode, input_type, result_list)
+    create_result_array_from_list(py, typecode, input_type, &result_list)
 }
 
 /// Filter operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn filter(py: Python, array: &PyAny, predicate: PyObject) -> PyResult<PyObject> {
+pub fn filter(py: Python<'_>, array: &Bound<'_, PyAny>, predicate: PyObject) -> PyResult<PyObject> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, false)?;
     let typecode = get_typecode_unified(array, input_type)?;
-    let callable = predicate.as_ref(py);
+    let callable = predicate.bind(py);
 
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
@@ -142,13 +142,13 @@ pub fn filter(py: Python, array: &PyAny, predicate: PyObject) -> PyResult<PyObje
 
 // Generic reduce implementation
 fn reduce_impl<T>(
-    py: Python,
+    py: Python<'_>,
     buffer: &PyBuffer<T>,
-    r#fn: &PyAny,
+    r#fn: &Bound<'_, PyAny>,
     initial: Option<PyObject>,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + pyo3::ToPyObject,
+    T: Element + Copy + IntoPy<PyObject>,
 {
     let slice = buffer
         .as_slice(py)
@@ -169,14 +169,14 @@ where
         Some(init) => (init, 0),
         None => {
             let first = slice.iter().next().unwrap().get();
-            (first.to_object(py), 1)
+            (first.into_py(py), 1)
         }
     };
     for cell in slice.iter().skip(start_idx) {
         let value = cell.get();
-        let value_obj = value.to_object(py);
+        let value_obj = value.into_py(py);
         let result = r#fn.call1((acc, value_obj))?;
-        acc = result.to_object(py);
+        acc = result.into_py(py);
     }
 
     Ok(acc)
@@ -185,15 +185,15 @@ where
 /// Reduce operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
 pub fn reduce(
-    py: Python,
-    array: &PyAny,
+    py: Python<'_>,
+    array: &Bound<'_, PyAny>,
     r#fn: PyObject,
     initial: Option<PyObject>,
 ) -> PyResult<PyObject> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, false)?;
     let typecode = get_typecode_unified(array, input_type)?;
-    let callable = r#fn.as_ref(py);
+    let callable = r#fn.bind(py);
 
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     let array_len = get_array_len(array)?;

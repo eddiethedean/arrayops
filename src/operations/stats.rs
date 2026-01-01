@@ -55,7 +55,7 @@ where
 
 /// Variance operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn var(py: Python, array: &PyAny) -> PyResult<f64> {
+pub fn var(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<f64> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, false)?;
     let typecode = get_typecode_unified(array, input_type)?;
@@ -151,7 +151,7 @@ pub fn var(py: Python, array: &PyAny) -> PyResult<f64> {
 
 /// Standard deviation operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction(name = "std")]
-pub fn std_dev(py: Python, array: &PyAny) -> PyResult<f64> {
+pub fn std_dev(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<f64> {
     let variance = var(py, array)?;
     Ok(variance.sqrt())
 }
@@ -196,7 +196,7 @@ where
 
 /// Median operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn median(py: Python, array: &PyAny) -> PyResult<PyObject> {
+pub fn median(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<PyObject> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, false)?;
     let typecode = get_typecode_unified(array, input_type)?;
@@ -211,66 +211,66 @@ pub fn median(py: Python, array: &PyAny) -> PyResult<PyObject> {
         TypeCode::Int8 => {
             let buffer = PyBuffer::<i8>::get(array)?;
             let result = median_impl_int(py, &buffer)?;
-            Ok(result.to_object(py))
+            Ok(result.into_py(py))
         }
         TypeCode::Int16 => {
             let buffer = PyBuffer::<i16>::get(array)?;
             let result = median_impl_int(py, &buffer)?;
-            Ok(result.to_object(py))
+            Ok(result.into_py(py))
         }
         TypeCode::Int32 => {
             let buffer = PyBuffer::<i32>::get(array)?;
             let result = median_impl_int(py, &buffer)?;
-            Ok(result.to_object(py))
+            Ok(result.into_py(py))
         }
         TypeCode::Int64 => {
             let itemsize = get_itemsize(array)?;
             if itemsize == 4 {
                 let buffer = PyBuffer::<i32>::get(array)?;
                 let result = median_impl_int(py, &buffer)?;
-                Ok(result.to_object(py))
+                Ok(result.into_py(py))
             } else {
                 let buffer = PyBuffer::<i64>::get(array)?;
                 let result = median_impl_int(py, &buffer)?;
-                Ok(result.to_object(py))
+                Ok(result.into_py(py))
             }
         }
         TypeCode::UInt8 => {
             let buffer = PyBuffer::<u8>::get(array)?;
             let result = median_impl_int(py, &buffer)?;
-            Ok(result.to_object(py))
+            Ok(result.into_py(py))
         }
         TypeCode::UInt16 => {
             let buffer = PyBuffer::<u16>::get(array)?;
             let result = median_impl_int(py, &buffer)?;
-            Ok(result.to_object(py))
+            Ok(result.into_py(py))
         }
         TypeCode::UInt32 => {
             let buffer = PyBuffer::<u32>::get(array)?;
             let result = median_impl_int(py, &buffer)?;
-            Ok(result.to_object(py))
+            Ok(result.into_py(py))
         }
         TypeCode::UInt64 => {
             let itemsize = get_itemsize(array)?;
             if itemsize == 4 {
                 let buffer = PyBuffer::<u32>::get(array)?;
                 let result = median_impl_int(py, &buffer)?;
-                Ok(result.to_object(py))
+                Ok(result.into_py(py))
             } else {
                 let buffer = PyBuffer::<u64>::get(array)?;
                 let result = median_impl_int(py, &buffer)?;
-                Ok(result.to_object(py))
+                Ok(result.into_py(py))
             }
         }
         TypeCode::Float32 => {
             let buffer = PyBuffer::<f32>::get(array)?;
             let result = median_impl_float(py, &buffer)?;
-            Ok(result.to_object(py))
+            Ok(result.into_py(py))
         }
         TypeCode::Float64 => {
             let buffer = PyBuffer::<f64>::get(array)?;
             let result = median_impl_float(py, &buffer)?;
-            Ok(result.to_object(py))
+            Ok(result.into_py(py))
         }
     }
 }

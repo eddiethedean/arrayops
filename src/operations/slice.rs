@@ -6,8 +6,8 @@ use crate::validation::{detect_input_type, validate_for_operation};
 /// Slice operation - returns a zero-copy memoryview of a portion of the array
 #[pyfunction]
 pub fn slice(
-    py: Python,
-    array: &PyAny,
+    py: Python<'_>,
+    array: &Bound<'_, PyAny>,
     start: Option<usize>,
     end: Option<usize>,
 ) -> PyResult<PyObject> {
@@ -21,8 +21,7 @@ pub fn slice(
     // Bounds checking
     if start_idx > len || end_idx > len || start_idx > end_idx {
         return Err(pyo3::exceptions::PyValueError::new_err(format!(
-            "Invalid slice indices: start={}, end={}, length={}",
-            start_idx, end_idx, len
+            "Invalid slice indices: start={start_idx}, end={end_idx}, length={len}"
         )));
     }
 

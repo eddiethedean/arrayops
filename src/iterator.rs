@@ -18,8 +18,8 @@ pub struct ArrayIterator {
 impl ArrayIterator {
     /// Create a new ArrayIterator from an array-like object
     #[new]
-    pub fn new(py: Python, source: PyObject) -> PyResult<Self> {
-        let source_ref = source.as_ref(py);
+    pub fn new(py: Python<'_>, source: PyObject) -> PyResult<Self> {
+        let source_ref = source.bind(py);
         let input_type = detect_input_type(source_ref)?;
         validate_for_operation(source_ref, input_type, false)?;
         let typecode = get_typecode_unified(source_ref, input_type)?;
@@ -51,7 +51,7 @@ impl ArrayIterator {
         slf.current_index += 1;
 
         // Get element at index based on typecode
-        let source_ref = source.as_ref(py);
+        let source_ref = source.bind(py);
         let result = match typecode {
             TypeCode::Int8 => extract_element_at_index::<i8>(py, source_ref, index)?,
             TypeCode::Int16 => extract_element_at_index::<i16>(py, source_ref, index)?,
@@ -85,6 +85,6 @@ impl ArrayIterator {
 
 /// Helper function to create an ArrayIterator
 #[pyfunction]
-pub fn array_iterator(py: Python, array: PyObject) -> PyResult<Py<ArrayIterator>> {
+pub fn array_iterator(py: Python<'_>, array: PyObject) -> PyResult<Py<ArrayIterator>> {
     Py::new(py, ArrayIterator::new(py, array)?)
 }

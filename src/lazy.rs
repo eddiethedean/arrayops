@@ -6,12 +6,15 @@
 use pyo3::prelude::*;
 
 /// Lazy operation types
-#[derive(Clone)]
 pub enum LazyOp {
     Map { function: PyObject },
     Filter { predicate: PyObject },
     // Add other operations as needed
 }
+
+// PyObject doesn't implement Clone directly, but we can store it in an enum
+// and clone it when we have Python GIL available. For now, we'll avoid deriving Clone
+// and handle cloning manually in the methods that need it.
 
 /// Lazy array wrapper for deferred evaluation
 #[pyclass]
@@ -35,8 +38,18 @@ impl LazyArray {
     }
 
     /// Apply a map operation (returns new LazyArray)
-    fn map(&self, py: Python, function: PyObject) -> PyResult<Py<Self>> {
-        let mut new_ops = self.operations.clone();
+    fn map(&self, py: Python<'_>, function: PyObject) -> PyResult<Py<Self>> {
+        let mut new_ops = Vec::with_capacity(self.operations.len() + 1);
+        for op in &self.operations {
+            match op {
+                LazyOp::Map { function: f } => new_ops.push(LazyOp::Map {
+                    function: f.clone_ref(py),
+                }),
+                LazyOp::Filter { predicate: p } => new_ops.push(LazyOp::Filter {
+                    predicate: p.clone_ref(py),
+                }),
+            }
+        }
         new_ops.push(LazyOp::Map {
             function: function.clone_ref(py),
         });
@@ -52,8 +65,18 @@ impl LazyArray {
     }
 
     /// Apply a filter operation (returns new LazyArray)
-    fn filter(&self, py: Python, predicate: PyObject) -> PyResult<Py<Self>> {
-        let mut new_ops = self.operations.clone();
+    fn filter(&self, py: Python<'_>, predicate: PyObject) -> PyResult<Py<Self>> {
+        let mut new_ops = Vec::with_capacity(self.operations.len() + 1);
+        for op in &self.operations {
+            match op {
+                LazyOp::Map { function: f } => new_ops.push(LazyOp::Map {
+                    function: f.clone_ref(py),
+                }),
+                LazyOp::Filter { predicate: p } => new_ops.push(LazyOp::Filter {
+                    predicate: p.clone_ref(py),
+                }),
+            }
+        }
         new_ops.push(LazyOp::Filter {
             predicate: predicate.clone_ref(py),
         });

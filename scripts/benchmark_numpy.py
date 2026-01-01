@@ -159,7 +159,7 @@ def run_benchmarks():
         # Sum
         numpy_time, arrayops_time, _ = benchmark_sum(size)
         ratio = numpy_time / arrayops_time if arrayops_time > 0 else 0
-        print(f"Sum:")
+        print("Sum:")
         print(f"  NumPy:    {numpy_time:8.3f} ms")
         print(f"  arrayops: {arrayops_time:8.3f} ms")
         print(f"  Ratio:    {ratio:6.2f}x")
@@ -167,7 +167,7 @@ def run_benchmarks():
         # Scale
         numpy_time, arrayops_time = benchmark_scale(size)
         ratio = numpy_time / arrayops_time if arrayops_time > 0 else 0
-        print(f"Scale (multiply by 2):")
+        print("Scale (multiply by 2):")
         print(f"  NumPy:    {numpy_time:8.3f} ms")
         print(f"  arrayops: {arrayops_time:8.3f} ms")
         print(f"  Ratio:    {ratio:6.2f}x")
@@ -175,7 +175,7 @@ def run_benchmarks():
         # Map
         numpy_time, arrayops_time = benchmark_map(size)
         ratio = arrayops_time / numpy_time if numpy_time > 0 else 0
-        print(f"Map (x * 2) with Python callable:")
+        print("Map (x * 2) with Python callable:")
         print(f"  NumPy:    {numpy_time:8.3f} ms")
         print(f"  arrayops: {arrayops_time:8.3f} ms")
         print(f"  Ratio:    {ratio:6.2f}x (arrayops/NumPy)")
@@ -183,7 +183,7 @@ def run_benchmarks():
         # Filter
         numpy_time, arrayops_time = benchmark_filter(size)
         ratio = numpy_time / arrayops_time if arrayops_time > 0 else 0
-        print(f"Filter (even numbers):")
+        print("Filter (even numbers):")
         print(f"  NumPy:    {numpy_time:8.3f} ms")
         print(f"  arrayops: {arrayops_time:8.3f} ms")
         print(f"  Ratio:    {ratio:6.2f}x")
@@ -191,7 +191,7 @@ def run_benchmarks():
         # Mean
         numpy_time, arrayops_time = benchmark_mean(size)
         ratio = numpy_time / arrayops_time if arrayops_time > 0 else 0
-        print(f"Mean:")
+        print("Mean:")
         print(f"  NumPy:    {numpy_time:8.3f} ms")
         print(f"  arrayops: {arrayops_time:8.3f} ms")
         print(f"  Ratio:    {ratio:6.2f}x")
@@ -199,7 +199,7 @@ def run_benchmarks():
         # Std
         numpy_time, arrayops_time = benchmark_std(size)
         ratio = numpy_time / arrayops_time if arrayops_time > 0 else 0
-        print(f"Standard Deviation:")
+        print("Standard Deviation:")
         print(f"  NumPy:    {numpy_time:8.3f} ms")
         print(f"  arrayops: {arrayops_time:8.3f} ms")
         print(f"  Ratio:    {ratio:6.2f}x")

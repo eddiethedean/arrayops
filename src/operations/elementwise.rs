@@ -28,7 +28,7 @@ fn add_impl<T>(
     input_type: InputType,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + std::ops::Add<Output = T> + Send + Sync + pyo3::ToPyObject,
+    T: Element + Copy + std::ops::Add<Output = T> + Send + Sync + IntoPy<PyObject>,
 {
     #[cfg(feature = "parallel")]
     {
@@ -71,7 +71,7 @@ fn multiply_impl<T>(
     input_type: InputType,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + std::ops::Mul<Output = T> + Send + Sync + pyo3::ToPyObject,
+    T: Element + Copy + std::ops::Mul<Output = T> + Send + Sync + IntoPy<PyObject>,
 {
     #[cfg(feature = "parallel")]
     {
@@ -105,7 +105,7 @@ where
 }
 
 #[pyfunction]
-pub fn add(py: Python, arr1: &PyAny, arr2: &PyAny) -> PyResult<PyObject> {
+pub fn add(py: Python<'_>, arr1: &Bound<'_, PyAny>, arr2: &Bound<'_, PyAny>) -> PyResult<PyObject> {
     let input_type1 = detect_input_type(arr1)?;
     validate_for_operation(arr1, input_type1, false)?;
     let typecode1 = get_typecode_unified(arr1, input_type1)?;
@@ -218,7 +218,7 @@ pub fn add(py: Python, arr1: &PyAny, arr2: &PyAny) -> PyResult<PyObject> {
 }
 
 #[pyfunction]
-pub fn multiply(py: Python, arr1: &PyAny, arr2: &PyAny) -> PyResult<PyObject> {
+pub fn multiply(py: Python<'_>, arr1: &Bound<'_, PyAny>, arr2: &Bound<'_, PyAny>) -> PyResult<PyObject> {
     let input_type1 = detect_input_type(arr1)?;
     validate_for_operation(arr1, input_type1, false)?;
     let typecode1 = get_typecode_unified(arr1, input_type1)?;
@@ -332,7 +332,7 @@ pub fn multiply(py: Python, arr1: &PyAny, arr2: &PyAny) -> PyResult<PyObject> {
 
 /// Clip operation (in-place) for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn clip(py: Python, array: &PyAny, min_val: f64, max_val: f64) -> PyResult<()> {
+pub fn clip(py: Python<'_>, array: &Bound<'_, PyAny>, min_val: f64, max_val: f64) -> PyResult<()> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, true)?;
     let typecode = get_typecode_unified(array, input_type)?;
@@ -574,7 +574,7 @@ pub fn clip(py: Python, array: &PyAny, min_val: f64, max_val: f64) -> PyResult<(
 
 /// Normalize operation (in-place) for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn normalize(py: Python, array: &PyAny) -> PyResult<()> {
+pub fn normalize(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<()> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, true)?;
     let typecode = get_typecode_unified(array, input_type)?;

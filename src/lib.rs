@@ -175,7 +175,7 @@ pub fn lazy_array(py: Python, array: PyObject) -> PyResult<Py<lazy::LazyArray>> 
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn _arrayops(_py: Python, m: &PyModule) -> PyResult<()> {
+fn _arrayops(_py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(operations::basic::sum, m)?)?;
     m.add_function(wrap_pyfunction!(operations::basic::scale, m)?)?;
     m.add_function(wrap_pyfunction!(operations::basic::mean, m)?)?;

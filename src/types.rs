@@ -34,8 +34,7 @@ impl TypeCode {
             'f' => Ok(TypeCode::Float32),
             'd' => Ok(TypeCode::Float64),
             _ => Err(PyTypeError::new_err(format!(
-                "Unsupported typecode: '{}'. Supported: b, B, h, H, i, I, l, L, f, d",
-                typecode
+                "Unsupported typecode: '{typecode}'. Supported: b, B, h, H, i, I, l, L, f, d"
             ))),
         }
     }
@@ -58,8 +57,10 @@ impl TypeCode {
 }
 
 /// Get typecode from Python array.array object
-pub(crate) fn get_typecode(array: &PyAny) -> PyResult<TypeCode> {
-    let typecode_str = array.getattr("typecode")?.str()?.to_string_lossy();
+pub(crate) fn get_typecode(array: &Bound<'_, PyAny>) -> PyResult<TypeCode> {
+    let typecode_attr = array.getattr("typecode")?;
+    let typecode_str_obj = typecode_attr.str()?;
+    let typecode_str = typecode_str_obj.to_string_lossy();
     if typecode_str.len() != 1 {
         return Err(PyTypeError::new_err("Invalid typecode"));
     }
@@ -67,9 +68,11 @@ pub(crate) fn get_typecode(array: &PyAny) -> PyResult<TypeCode> {
 }
 
 /// Get typecode from numpy.ndarray dtype
-pub(crate) fn get_numpy_typecode(arr: &PyAny) -> PyResult<TypeCode> {
+pub(crate) fn get_numpy_typecode(arr: &Bound<'_, PyAny>) -> PyResult<TypeCode> {
     let dtype = arr.getattr("dtype")?;
-    let dtype_str = dtype.getattr("char")?.str()?.to_string_lossy();
+    let char_attr = dtype.getattr("char")?;
+    let dtype_str_obj = char_attr.str()?;
+    let dtype_str = dtype_str_obj.to_string_lossy();
     let dtype_char = dtype_str.chars().next().ok_or_else(|| {
         PyTypeError::new_err("Could not extract dtype character from numpy.ndarray")
     })?;
@@ -90,15 +93,16 @@ pub(crate) fn get_numpy_typecode(arr: &PyAny) -> PyResult<TypeCode> {
         'f' => Ok(TypeCode::Float32),
         'd' => Ok(TypeCode::Float64),
         _ => Err(PyTypeError::new_err(format!(
-            "Unsupported numpy dtype: '{}'. Supported: b, B, h, H, i, I, l, L, f, d",
-            dtype_char
+            "Unsupported numpy dtype: '{dtype_char}'. Supported: b, B, h, H, i, I, l, L, f, d"
         ))),
     }
 }
 
 /// Get typecode from memoryview format string
-pub(crate) fn get_memoryview_typecode(mv: &PyAny) -> PyResult<TypeCode> {
-    let format_str = mv.getattr("format")?.str()?.to_string_lossy();
+pub(crate) fn get_memoryview_typecode(mv: &Bound<'_, PyAny>) -> PyResult<TypeCode> {
+    let format_attr = mv.getattr("format")?;
+    let format_str_obj = format_attr.str()?;
+    let format_str = format_str_obj.to_string_lossy();
 
     // Parse format string (handle endianness: '<i4', '>f8', 'i', 'I', etc.)
     // Remove endianness prefix if present (<, >, =, !)
@@ -126,14 +130,13 @@ pub(crate) fn get_memoryview_typecode(mv: &PyAny) -> PyResult<TypeCode> {
         'f' => Ok(TypeCode::Float32),
         'd' => Ok(TypeCode::Float64),
         _ => Err(PyTypeError::new_err(format!(
-            "Unsupported memoryview format: '{}'. Supported: b, B, h, H, i, I, l, L, f, d",
-            base_char
+            "Unsupported memoryview format: '{base_char}'. Supported: b, B, h, H, i, I, l, L, f, d"
         ))),
     }
 }
 
 /// Get typecode from Arrow buffer/array
-pub(crate) fn get_arrow_typecode(arrow_obj: &PyAny) -> PyResult<TypeCode> {
+pub(crate) fn get_arrow_typecode(arrow_obj: &Bound<'_, PyAny>) -> PyResult<TypeCode> {
     // Arrow arrays have a 'type' attribute with type information
     // For buffers, we need to check the underlying data type
     // Try to get dtype from Arrow array

@@ -129,7 +129,7 @@ def run_benchmarks():
         # Sum
         list_time, array_time, _ = benchmark_sum(size)
         speedup = list_time / array_time if array_time > 0 else 0
-        print(f"Sum:")
+        print("Sum:")
         print(f"  List:     {list_time:8.3f} ms")
         print(f"  arrayops: {array_time:8.3f} ms")
         print(f"  Speedup:  {speedup:6.1f}x")
@@ -137,7 +137,7 @@ def run_benchmarks():
         # Scale
         list_time, array_time = benchmark_scale(size)
         speedup = list_time / array_time if array_time > 0 else 0
-        print(f"Scale (multiply by 2):")
+        print("Scale (multiply by 2):")
         print(f"  List:     {list_time:8.3f} ms")
         print(f"  arrayops: {array_time:8.3f} ms")
         print(f"  Speedup:  {speedup:6.1f}x")
@@ -145,7 +145,7 @@ def run_benchmarks():
         # Map
         list_time, array_time = benchmark_map(size)
         speedup = list_time / array_time if array_time > 0 else 0
-        print(f"Map (x * 2):")
+        print("Map (x * 2):")
         print(f"  List:     {list_time:8.3f} ms")
         print(f"  arrayops: {array_time:8.3f} ms")
         print(f"  Speedup:  {speedup:6.1f}x")
@@ -153,7 +153,7 @@ def run_benchmarks():
         # Filter
         list_time, array_time = benchmark_filter(size)
         speedup = list_time / array_time if array_time > 0 else 0
-        print(f"Filter (even numbers):")
+        print("Filter (even numbers):")
         print(f"  List:     {list_time:8.3f} ms")
         print(f"  arrayops: {array_time:8.3f} ms")
         print(f"  Speedup:  {speedup:6.1f}x")
@@ -161,7 +161,7 @@ def run_benchmarks():
         # Reduce
         list_time, array_time = benchmark_reduce(min(size, 10000))  # Limit reduce size
         speedup = list_time / array_time if array_time > 0 else 0
-        print(f"Reduce (product):")
+        print("Reduce (product):")
         print(f"  List:     {list_time:8.3f} ms")
         print(f"  arrayops: {array_time:8.3f} ms")
         print(f"  Speedup:  {speedup:6.1f}x")

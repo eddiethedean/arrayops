@@ -14,7 +14,7 @@ use crate::validation::{
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
-fn reverse_impl<T>(py: Python, buffer: &mut PyBuffer<T>) -> PyResult<()>
+fn reverse_impl<T>(py: Python<'_>, buffer: &mut PyBuffer<T>) -> PyResult<()>
 where
     T: Element + Copy + Send + Sync,
 {
@@ -33,7 +33,7 @@ where
 }
 /// Reverse operation (in-place) for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn reverse(py: Python, array: &PyAny) -> PyResult<()> {
+pub fn reverse(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<()> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, true)?;
     let typecode = get_typecode_unified(array, input_type)?;
@@ -180,7 +180,7 @@ where
 
 /// Sort operation (in-place) for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn sort(py: Python, array: &PyAny) -> PyResult<()> {
+pub fn sort(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<()> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, true)?;
     let typecode = get_typecode_unified(array, input_type)?;
@@ -254,7 +254,7 @@ fn unique_impl_int<T>(
     input_type: InputType,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + Ord + Send + Sync + pyo3::ToPyObject,
+    T: Element + Copy + Ord + Send + Sync + IntoPy<PyObject>,
 {
     let slice = buffer
         .as_slice(py)
@@ -267,10 +267,10 @@ where
 
     let result_list = PyList::empty(py);
     for val in data {
-        result_list.append(val.to_object(py))?;
+        result_list.append(val.into_py(py))?;
     }
 
-    create_result_array_from_list(py, typecode, input_type, result_list)
+    create_result_array_from_list(py, typecode, input_type, &result_list)
 }
 
 fn unique_impl_float<T>(
@@ -280,7 +280,7 @@ fn unique_impl_float<T>(
     input_type: InputType,
 ) -> PyResult<PyObject>
 where
-    T: Element + Copy + PartialOrd + Send + Sync + pyo3::ToPyObject,
+    T: Element + Copy + PartialOrd + Send + Sync + IntoPy<PyObject>,
 {
     let slice = buffer
         .as_slice(py)
@@ -293,15 +293,15 @@ where
 
     let result_list = PyList::empty(py);
     for val in data {
-        result_list.append(val.to_object(py))?;
+        result_list.append(val.into_py(py))?;
     }
 
-    create_result_array_from_list(py, typecode, input_type, result_list)
+    create_result_array_from_list(py, typecode, input_type, &result_list)
 }
 
 /// Unique operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn unique(py: Python, array: &PyAny) -> PyResult<PyObject> {
+pub fn unique(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<PyObject> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, false)?;
     let typecode = get_typecode_unified(array, input_type)?;

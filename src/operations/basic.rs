@@ -16,9 +16,9 @@ use crate::buffer::{
 use crate::buffer::{extract_buffer_to_vec, should_parallelize};
 
 // Generic sum implementation with cache-friendly processing
-fn sum_impl<T>(py: Python, buffer: &PyBuffer<T>, len: usize) -> PyResult<T>
+fn sum_impl<T>(py: Python<'_>, buffer: &PyBuffer<T>, len: usize) -> PyResult<T>
 where
-    T: Element + Copy + Default + std::ops::Add<Output = T> + pyo3::ToPyObject + Send + Sync,
+    T: Element + Copy + Default + std::ops::Add<Output = T> + IntoPy<PyObject> + Send + Sync,
 {
     #[cfg(feature = "parallel")]
     {
@@ -198,7 +198,7 @@ where
 }
 
 // Generic min implementation
-fn min_impl<T>(py: Python, buffer: &PyBuffer<T>) -> PyResult<T>
+fn min_impl<T>(py: Python<'_>, buffer: &PyBuffer<T>) -> PyResult<T>
 where
     T: Element + Copy + PartialOrd + Send + Sync,
 {
@@ -259,7 +259,7 @@ where
 }
 
 // Generic max implementation
-fn max_impl<T>(py: Python, buffer: &PyBuffer<T>) -> PyResult<T>
+fn max_impl<T>(py: Python<'_>, buffer: &PyBuffer<T>) -> PyResult<T>
 where
     T: Element + Copy + PartialOrd + Send + Sync,
 {
@@ -321,7 +321,7 @@ where
 
 /// Sum operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
+pub fn sum(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<PyObject> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, false)?;
     let typecode = get_typecode_unified(array, input_type)?;
@@ -329,43 +329,43 @@ pub fn sum(py: Python, array: &PyAny) -> PyResult<PyObject> {
     // Handle empty arrays early to avoid buffer alignment issues on macOS
     if get_array_len(array)? == 0 {
         match typecode {
-            TypeCode::Int8 => return Ok(0i8.to_object(py)),
-            TypeCode::Int16 => return Ok(0i16.to_object(py)),
-            TypeCode::Int32 => return Ok(0i32.to_object(py)),
+            TypeCode::Int8 => return Ok(0i8.into_py(py)),
+            TypeCode::Int16 => return Ok(0i16.into_py(py)),
+            TypeCode::Int32 => return Ok(0i32.into_py(py)),
             TypeCode::Int64 => {
                 let itemsize = get_itemsize(array)?;
                 if itemsize == 4 {
-                    return Ok(0i32.to_object(py));
+                    return Ok(0i32.into_py(py));
                 } else {
-                    return Ok(0i64.to_object(py));
+                    return Ok(0i64.into_py(py));
                 }
             }
-            TypeCode::UInt8 => return Ok(0u8.to_object(py)),
-            TypeCode::UInt16 => return Ok(0u16.to_object(py)),
-            TypeCode::UInt32 => return Ok(0u32.to_object(py)),
+            TypeCode::UInt8 => return Ok(0u8.into_py(py)),
+            TypeCode::UInt16 => return Ok(0u16.into_py(py)),
+            TypeCode::UInt32 => return Ok(0u32.into_py(py)),
             TypeCode::UInt64 => {
                 let itemsize = get_itemsize(array)?;
                 if itemsize == 4 {
-                    return Ok(0u32.to_object(py));
+                    return Ok(0u32.into_py(py));
                 } else {
-                    return Ok(0u64.to_object(py));
+                    return Ok(0u64.into_py(py));
                 }
             }
-            TypeCode::Float32 => return Ok(0.0f32.to_object(py)),
-            TypeCode::Float64 => return Ok(0.0f64.to_object(py)),
+            TypeCode::Float32 => return Ok(0.0f32.into_py(py)),
+            TypeCode::Float64 => return Ok(0.0f64.into_py(py)),
         }
     }
 
     let len = get_array_len(array)?;
     crate::dispatch_by_typecode!(typecode, array, |buffer| {
         let result = sum_impl(py, &buffer, len)?;
-        Ok(result.to_object(py))
+        Ok(result.into_py(py))
     })
 }
 
 /// Scale operation (in-place) for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn scale(py: Python, array: &PyAny, factor: f64) -> PyResult<()> {
+pub fn scale(py: Python<'_>, array: &Bound<'_, PyAny>, factor: f64) -> PyResult<()> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, true)?;
     let typecode = get_typecode_unified(array, input_type)?;
@@ -434,7 +434,7 @@ pub fn scale(py: Python, array: &PyAny, factor: f64) -> PyResult<()> {
 
 /// Mean operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn mean(py: Python, array: &PyAny) -> PyResult<f64> {
+pub fn mean(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<f64> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, false)?;
     let typecode = get_typecode_unified(array, input_type)?;
@@ -513,7 +513,7 @@ pub fn mean(py: Python, array: &PyAny) -> PyResult<f64> {
 
 /// Min operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn min(py: Python, array: &PyAny) -> PyResult<PyObject> {
+pub fn min(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<PyObject> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, false)?;
     let typecode = get_typecode_unified(array, input_type)?;
@@ -526,13 +526,13 @@ pub fn min(py: Python, array: &PyAny) -> PyResult<PyObject> {
 
     crate::dispatch_by_typecode!(typecode, array, |buffer| {
         let result = min_impl(py, &buffer)?;
-        Ok(result.to_object(py))
+        Ok(result.into_py(py))
     })
 }
 
 /// Max operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
-pub fn max(py: Python, array: &PyAny) -> PyResult<PyObject> {
+pub fn max(py: Python<'_>, array: &Bound<'_, PyAny>) -> PyResult<PyObject> {
     let input_type = detect_input_type(array)?;
     validate_for_operation(array, input_type, false)?;
     let typecode = get_typecode_unified(array, input_type)?;
@@ -545,6 +545,6 @@ pub fn max(py: Python, array: &PyAny) -> PyResult<PyObject> {
 
     crate::dispatch_by_typecode!(typecode, array, |buffer| {
         let result = max_impl(py, &buffer)?;
-        Ok(result.to_object(py))
+        Ok(result.into_py(py))
     })
 }

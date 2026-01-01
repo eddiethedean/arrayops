@@ -10,7 +10,6 @@ These tests verify security properties including:
 
 import array
 import pytest
-import sys
 
 try:
     import numpy as np
@@ -157,7 +156,9 @@ class TestIntegerOverflow:
 
         # Use values that sum to within i32 range (avoid overflow)
         # This test verifies large values are handled correctly
-        arr = array.array("i", [1_000_000_000, 1_000_000_000])  # Sum = 2B, within i32 range
+        arr = array.array(
+            "i", [1_000_000_000, 1_000_000_000]
+        )  # Sum = 2B, within i32 range
         result = arrayops.sum(arr)
         # Result should be valid
         assert isinstance(result, int)
@@ -168,7 +169,9 @@ class TestIntegerOverflow:
         import arrayops
 
         # Use values that sum to within i32 range (avoid overflow)
-        arr = array.array("i", [-1_000_000_000, -1_000_000_000])  # Sum = -2B, within i32 range
+        arr = array.array(
+            "i", [-1_000_000_000, -1_000_000_000]
+        )  # Sum = -2B, within i32 range
         result = arrayops.sum(arr)
         # Result should be valid
         assert isinstance(result, int)
@@ -176,15 +179,14 @@ class TestIntegerOverflow:
 
     def test_integer_overflow_does_not_crash(self):
         """Test that integer overflow is handled safely.
-        
+
         Note: In debug mode, Rust will panic on overflow (expected behavior for catching bugs).
         In release mode, Rust uses wrapping arithmetic (safe, doesn't cause crashes).
         For production use, compile in release mode where wrapping is the default.
-        
+
         This test verifies that overflow doesn't cause memory safety issues.
         """
         import arrayops
-        import sys
 
         # Test with values that sum to within i64 range (no overflow)
         # This verifies that large values are handled correctly
@@ -403,4 +405,3 @@ class TestMemorySafety:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-
