@@ -2,7 +2,6 @@
 
 import array
 import pytest
-import sys
 
 try:
     import numpy as np
@@ -282,4 +281,3 @@ class TestLazyArrayIterator:
 
         result = [x + 1 for x in lazy]
         assert result == [3, 5, 7, 9, 11]
-

@@ -6,6 +6,17 @@ Complete API documentation for the `arrayops` package.
 
 `arrayops` provides fast, Rust-accelerated operations for Python's built-in `array.array` type, `numpy.ndarray` (1D arrays), and Python `memoryview` objects. All operations work directly with these types without requiring new types or conversions.
 
+### Security Considerations
+
+All arrayops functions perform comprehensive input validation and use Rust's memory safety guarantees. For detailed security information, see the [Security Documentation](security.md). Key security points:
+
+- **Input validation**: All inputs are validated (type, typecode, properties) before processing
+- **Memory safety**: Rust's compile-time memory safety prevents buffer overflows and use-after-free
+- **Error handling**: Errors are handled gracefully without exposing sensitive information
+- **No unsafe patterns**: All buffer access uses safe PyO3 APIs
+
+When using arrayops with untrusted input, consider implementing size limits to prevent denial of service (DoS) attacks through resource exhaustion.
+
 ## Supported Types
 
 `arrayops` supports all numeric `array.array` typecodes, `numpy.ndarray` (1D, contiguous), and `memoryview` objects:

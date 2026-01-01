@@ -19,9 +19,9 @@ Fast, lightweight numeric operations for Python's `array.array`, `numpy.ndarray`
 
 - ⚡ **High Performance**: 10-100x faster than pure Python loops using Rust-accelerated operations
 - 🔒 **Memory Safe**: Zero-copy buffer access with Rust's safety guarantees
+- 🛡️ **Security Focused**: Comprehensive input validation, security testing, and dependency scanning
 - 📦 **Lightweight**: No dependencies beyond Rust standard library (optional: parallel execution via `rayon`)
 - 🔌 **Compatible**: Works directly with Python's `array.array`, `numpy.ndarray` (1D), `memoryview`, and Apache Arrow buffers - no new types
-- 🔄 **Iterator Protocol**: Efficient Rust-optimized iteration for all array types
 - ✅ **Fully Tested**: 100% code coverage (Python and Rust)
 - 🎯 **Type Safe**: Full mypy type checking support
 
@@ -85,16 +85,6 @@ sliced = ao.slice(data, 1, 4)  # Returns memoryview: [2, 3, 4]
 lazy = ao.lazy_array(data)
 result = lazy.map(lambda x: x * 2).filter(lambda x: x > 5).collect()
 # Efficiently chains map and filter, executes only when collect() is called
-
-# Efficient iteration
-it = ao.array_iterator(data)
-for value in it:
-    print(value)  # Iterate with Rust-optimized performance
-
-# LazyArray supports iteration too
-lazy = ao.lazy_array(data)
-for value in lazy:  # Evaluates chain and iterates
-    print(value)
 ```
 
 **📚 For complete documentation, examples, and API reference, see [arrayops.readthedocs.io](https://arrayops.readthedocs.io/)**
@@ -171,7 +161,6 @@ SIMD (Single Instruction, Multiple Data) optimizations are in development:
 | Arrow interop | ❌ | ✅ | ✅ |
 | Zero-copy slicing | ❌ | ✅ | ⚠️ |
 | Lazy evaluation | ❌ | ✅ | ❌ |
-| Iterator protocol | ⚠️ (slow) | ✅ (Rust-optimized) | ✅ |
 | Use case | Binary I/O | Scripting/ETL | Scientific computing |
 
 ## 🏗️ Architecture
@@ -250,6 +239,14 @@ ao.sum([1, 2, 3])  # TypeError: Expected array.array, numpy.ndarray, or memoryvi
 arr = array.array('c', b'abc')
 ao.sum(arr)  # TypeError: Unsupported typecode: 'c'
 ```
+
+## 🔒 Security
+
+arrayops takes security seriously. For security-related issues:
+
+- **Report vulnerabilities**: See [SECURITY.md](SECURITY.md) for responsible disclosure
+- **Security documentation**: See [Security Documentation](docs/security.md) for security guarantees and best practices
+- **Security updates**: Keep arrayops and dependencies up to date
 
 ## 📄 License
 

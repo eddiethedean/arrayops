@@ -2,4 +2,5 @@
 maturin>=1.10,<2.0
 pytest>=7.0.0
 pytest-cov>=4.0.0
+pip-audit>=2.6.0  # Security: Python dependency vulnerability scanning
 

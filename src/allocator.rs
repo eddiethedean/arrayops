@@ -1,5 +1,10 @@
 // Custom allocator support for arrayops
 // This module provides allocator abstractions for specialized memory pools
+//
+// SECURITY NOTE: This module is currently UNUSED (all code is marked #[allow(dead_code)]).
+// The unsafe blocks in this module use Rust's standard allocator (System.alloc/System.dealloc)
+// which is safe when used correctly. All unsafe blocks are documented with safety comments.
+// If this module is enabled in the future, all safety invariants must be maintained.
 
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::{Arc, Mutex};
@@ -21,6 +26,11 @@ pub struct DefaultAllocator;
 
 impl ArrayAllocator for DefaultAllocator {
     fn allocate(&self, size: usize) -> *mut u8 {
+        // SAFETY: This is safe because:
+        // 1. Layout::from_size_align validates the layout parameters
+        // 2. System.alloc is Rust's standard allocator and is safe to use
+        // 3. The returned pointer is managed by Rust's ownership system
+        // 4. This code is currently unused (dead code) - see module documentation
         unsafe {
             let layout = Layout::from_size_align(size, 8).expect("Invalid layout");
             System.alloc(layout)
@@ -28,6 +38,11 @@ impl ArrayAllocator for DefaultAllocator {
     }
 
     fn deallocate(&self, ptr: *mut u8, size: usize) {
+        // SAFETY: This is safe because:
+        // 1. Layout::from_size_align validates the layout parameters
+        // 2. System.dealloc is Rust's standard allocator and is safe to use
+        // 3. The pointer must have been allocated with System.alloc and matching layout
+        // 4. This code is currently unused (dead code) - see module documentation
         unsafe {
             let layout = Layout::from_size_align(size, 8).expect("Invalid layout");
             System.dealloc(ptr, layout);

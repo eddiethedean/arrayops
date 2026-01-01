@@ -115,7 +115,7 @@ impl LazyArray {
     fn __iter__(mut slf: PyRefMut<'_, Self>, py: Python) -> PyResult<PyObject> {
         // Evaluate the lazy chain first
         let result = slf.collect(py)?;
-        
+
         // Import arrayops module to create ArrayIterator
         let arrayops_module = PyModule::import(py, "arrayops._arrayops")?;
         let array_iterator_func = arrayops_module.getattr("array_iterator")?;

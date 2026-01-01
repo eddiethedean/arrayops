@@ -262,6 +262,13 @@ See the existing `sum` and `scale` implementations as reference:
    - Comprehensive test coverage
    - Tests are clear and maintainable
 
+5. **Security:**
+   - Input validation is performed
+   - Error messages are safe (no sensitive info)
+   - Unsafe code is minimized and documented
+   - Security-sensitive paths are tested
+   - See [Security Review Checklist](#security-review-checklist) below
+
 ### Responding to Feedback
 
 - Be open to suggestions
@@ -317,9 +324,34 @@ Contributors will be:
 
 Thank you for contributing to `arrayops`!
 
+## Security Review Checklist
+
+When reviewing code for security, ensure:
+
+- [ ] **Input Validation**: All inputs are validated (type, properties, constraints)
+- [ ] **Error Messages**: Error messages are helpful but don't leak sensitive information
+  - No memory addresses or pointers
+  - No internal implementation details
+  - No stack traces or debug information
+- [ ] **Unsafe Code**: Unsafe code is minimized and well-documented
+  - Safety comments explain why code is safe
+  - Unsafe blocks are justified (why safe APIs can't be used)
+- [ ] **Dependency Security**: New dependencies are reviewed for security
+  - Check for known vulnerabilities
+  - Verify dependencies are actively maintained
+- [ ] **Test Coverage**: Security-sensitive code paths are tested
+  - Input validation tests
+  - Edge case tests
+  - Error condition tests
+  - Large input tests (DoS considerations)
+
+For detailed security guidelines, see the [Developer Security Guide](developer-guide/security.md).
+
 ## Related Documentation
 
 - [Development Guide](development.md) - Detailed development setup
 - [API Reference](api.md) - Complete API documentation
 - [Design Document](design.md) - Architecture details
+- [Security Documentation](security.md) - Security guarantees and practices
+- [Developer Security Guide](developer-guide/security.md) - Security guidelines for contributors
 

@@ -272,9 +272,23 @@ class TestModuleInitialization:
 
     def test_module_import_error_with_arrayops_in_message(self):
         """Test helpful error message when _arrayops module is missing."""
-        # Save original state
-        original_module = sys.modules.pop("arrayops", None)
-        original_arrayops = sys.modules.pop("arrayops._arrayops", None)
+        # Save original state and clear all arrayops submodules
+        original_modules = {}
+        modules_to_clear = [
+            "arrayops",
+            "arrayops._arrayops",
+            "arrayops.basic",
+            "arrayops.transform",
+            "arrayops.stats",
+            "arrayops.elementwise",
+            "arrayops.manipulation",
+            "arrayops.slice",
+            "arrayops.iterator",
+            "arrayops.lazy",
+        ]
+        for module_name in modules_to_clear:
+            if module_name in sys.modules:
+                original_modules[module_name] = sys.modules.pop(module_name)
 
         try:
             # Read and execute the __init__.py file directly to trigger error path
@@ -328,20 +342,31 @@ class TestModuleInitialization:
                 builtins.__import__ = original_import
         finally:
             # Restore modules
-            if "arrayops" in sys.modules:
-                del sys.modules["arrayops"]
-            if "arrayops_test" in sys.modules:
-                del sys.modules["arrayops_test"]
-            if original_module:
-                sys.modules["arrayops"] = original_module
-            if original_arrayops:
-                sys.modules["arrayops._arrayops"] = original_arrayops
+            for module_name in list(sys.modules.keys()):
+                if module_name.startswith("arrayops"):
+                    del sys.modules[module_name]
+            for module_name, module in original_modules.items():
+                sys.modules[module_name] = module
 
     def test_module_import_error_other_error(self):
         """Test that other ImportErrors are re-raised unchanged."""
-        # Save original state
-        original_module = sys.modules.pop("arrayops", None)
-        original_arrayops = sys.modules.pop("arrayops._arrayops", None)
+        # Save original state and clear all arrayops submodules
+        original_modules = {}
+        modules_to_clear = [
+            "arrayops",
+            "arrayops._arrayops",
+            "arrayops.basic",
+            "arrayops.transform",
+            "arrayops.stats",
+            "arrayops.elementwise",
+            "arrayops.manipulation",
+            "arrayops.slice",
+            "arrayops.iterator",
+            "arrayops.lazy",
+        ]
+        for module_name in modules_to_clear:
+            if module_name in sys.modules:
+                original_modules[module_name] = sys.modules.pop(module_name)
 
         try:
             # Read and execute the __init__.py file with a different ImportError
@@ -392,12 +417,11 @@ class TestModuleInitialization:
                 builtins.__import__ = original_import
         finally:
             # Restore modules
-            if "arrayops" in sys.modules:
-                del sys.modules["arrayops"]
-            if original_module:
-                sys.modules["arrayops"] = original_module
-            if original_arrayops:
-                sys.modules["arrayops._arrayops"] = original_arrayops
+            for module_name in list(sys.modules.keys()):
+                if module_name.startswith("arrayops"):
+                    del sys.modules[module_name]
+            for module_name, module in original_modules.items():
+                sys.modules[module_name] = module
 
 
 class TestMap:

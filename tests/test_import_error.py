@@ -52,4 +52,6 @@ class TestImportErrors:
             assert hasattr(arrayops, class_name), f"{class_name} should be available"
             cls = getattr(arrayops, class_name)
             # Check it's a class-like object (has __new__ or similar)
-            assert hasattr(cls, "__new__") or hasattr(cls, "__init__"), f"{class_name} should be a class"
+            assert hasattr(cls, "__new__") or hasattr(cls, "__init__"), (
+                f"{class_name} should be a class"
+            )

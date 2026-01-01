@@ -18,8 +18,6 @@ classifiers = [
 dynamic = ["version"]
 description = "Rust-backed acceleration for Python array.array"
 readme = "README.md"
-# Note: NumPy is optional - arrayops works with array.array, numpy.ndarray, and memoryview
-# Install numpy separately if you want to use numpy.ndarray support: pip install numpy
 [project.urls]
 Homepage = "https://github.com/eddiethedean/arrayops"
 Repository = "https://github.com/eddiethedean/arrayops"
@@ -32,3 +30,12 @@ strip = true
 
 [tool.maturin.sdist]
 include = ["arrayops/**/*.py", "src/**/*", "Cargo.toml", "pyproject.toml", "README.md", "LICENSE"]
+
+[tool.pytest.ini_options]
+# Filter warnings from pytest-green-light plugin's ensure_greenlet_context fixture
+# This plugin provides async/SQLAlchemy support but arrayops tests don't use it
+# The warning is a deprecation that will become an error in pytest 9
+# We suppress it since arrayops doesn't use async/SQLAlchemy features
+filterwarnings = [
+    "ignore::pytest.PytestRemovedIn9Warning",
+]

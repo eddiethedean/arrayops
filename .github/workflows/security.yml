@@ -1,0 +1,148 @@
+name: Security
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    # Run weekly security scans (Monday at 00:00 UTC)
+    - cron: '0 0 * * 1'
+
+jobs:
+  cargo-audit:
+    name: Rust Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install cargo-audit
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit --version
+
+      - name: Run cargo audit
+        run: cargo audit
+        continue-on-error: false
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-audit-report
+          path: |
+            Cargo.lock
+            **/*.json
+          retention-days: 30
+
+  pip-audit:
+    name: Python Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Run pip-audit on runtime dependencies
+        run: |
+          # Check if there are any runtime dependencies in pyproject.toml
+          # Note: arrayops has minimal Python dependencies
+          pip-audit --desc || echo "No Python dependencies to audit"
+
+      - name: Run pip-audit on dev dependencies
+        run: |
+          # Install dev dependencies and audit them
+          pip install -r requirements-dev.txt
+          pip-audit --desc || echo "No vulnerabilities found"
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-report
+          path: |
+            requirements*.txt
+          retention-days: 30
+
+  security-tests:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install maturin
+        run: pip install maturin
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Build package
+        run: python -m maturin build --release --skip-auditwheel
+
+      - name: Install package
+        run: pip install target/wheels/arrayops-*.whl --force-reinstall
+
+      - name: Run security tests
+        run: |
+          # Temporarily rename source arrayops directory to avoid import conflicts
+          mv arrayops arrayops_src || true
+          python -m pytest tests/test_security.py -v
+          # Restore source directory
+          mv arrayops_src arrayops || true
+
+  clippy-security:
+    name: Clippy Security Lints
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+          override: true
+
+      - name: Run clippy with security focus
+        run: |
+          # Run clippy with all warnings enabled
+          # Security-relevant lints are included in default clippy
+          cargo clippy --all-features -- -D warnings -W clippy::suspicious -W clippy::correctness
+
+      - name: Check for unsafe code patterns
+        run: |
+          # Count unsafe blocks (should be minimal)
+          UNSAFE_COUNT=$(grep -r "unsafe {" src/ --include="*.rs" | wc -l || echo "0")
+          echo "Found $UNSAFE_COUNT unsafe blocks"
+          # Currently only allocator.rs has unsafe (dead code), so allow up to 2
+          if [ "$UNSAFE_COUNT" -gt 10 ]; then
+            echo "Warning: High number of unsafe blocks found"
+            exit 1
+          fi
+

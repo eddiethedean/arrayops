@@ -56,57 +56,49 @@ Example:
 
 __version__ = "0.4.0"
 
+# Import from organized submodules
 try:
-    from arrayops._arrayops import (
-        sum,
-        scale,
-        map,
-        map_inplace,
-        filter,
-        reduce,
-        mean,
-        min,
-        max,
-        std,
-        var,
-        median,
-        add,
-        multiply,
-        clip,
-        normalize,
-        reverse,
-        sort,
-        unique,
-        slice,
-        array_iterator,
-        ArrayIterator,
-        lazy_array,
-        LazyArray,
-    )
+    from arrayops.basic import max, mean, min, scale, sum
+    from arrayops.transform import filter, map, map_inplace, reduce
+    from arrayops.stats import median, std, var
+    from arrayops.stats import std_dev  # noqa: F401  # Backward compatibility alias
+    from arrayops.elementwise import add, clip, multiply, normalize
+    from arrayops.manipulation import reverse, sort, unique
+    from arrayops.slice import slice
+    from arrayops.iterator import ArrayIterator, array_iterator
+    from arrayops.lazy import LazyArray, lazy_array
 
     __all__ = [
+        # Basic operations
         "sum",
         "scale",
+        "mean",
+        "min",
+        "max",
+        # Transform operations
         "map",
         "map_inplace",
         "filter",
         "reduce",
-        "mean",
-        "min",
-        "max",
+        # Statistical operations
         "std",
         "var",
         "median",
+        # Element-wise operations
         "add",
         "multiply",
         "clip",
         "normalize",
+        # Manipulation operations
         "reverse",
         "sort",
         "unique",
+        # Slice operations
         "slice",
+        # Iterator
         "array_iterator",
         "ArrayIterator",
+        # Lazy evaluation
         "lazy_array",
         "LazyArray",
     ]

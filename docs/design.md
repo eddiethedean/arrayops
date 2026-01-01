@@ -171,10 +171,20 @@ ao.map(arr, lambda x: x * x)
 ---
 
 ## 7. Safety Guarantees
-- Bounds-checked slices
-- No unsafe pointer arithmetic exposed
-- No reallocation during in-place ops
-- Panic boundaries converted to Python exceptions
+
+### Memory Safety
+- **Bounds-checked slices**: All array access is bounds-checked through Rust's safe APIs
+- **No unsafe pointer arithmetic**: We use PyO3's safe buffer protocol APIs exclusively
+- **No reallocation during in-place ops**: In-place operations modify existing buffers without reallocation
+- **Panic boundaries**: Rust panics are caught and converted to Python exceptions
+
+### Security Guarantees
+- **Input validation**: All inputs are validated before processing (type, typecode, properties)
+- **Error message security**: Error messages are informative but don't leak sensitive information
+- **Minimal unsafe code**: Only dead code (allocator module) uses unsafe, and it's well-documented
+- **Dependency security**: Dependencies are regularly audited for vulnerabilities
+
+See [Security Documentation](security.md) for comprehensive security information.
 
 ---
 
