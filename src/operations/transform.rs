@@ -188,6 +188,7 @@ where
 
 /// Reduce operation for array.array, numpy.ndarray, or memoryview
 #[pyfunction]
+#[pyo3(signature = (array, r#fn, *, initial = None))]
 pub fn reduce(
     py: Python<'_>,
     array: &Bound<'_, PyAny>,
