@@ -268,7 +268,7 @@ class TestModuleInitialization:
         assert "reverse" in arrayops.__all__
         assert "sort" in arrayops.__all__
         assert "unique" in arrayops.__all__
-        assert arrayops.__version__ == "0.4.0"
+        assert arrayops.__version__ == "1.0.0"
 
     def test_module_import_error_with_arrayops_in_message(self):
         """Test helpful error message when _arrayops module is missing."""
