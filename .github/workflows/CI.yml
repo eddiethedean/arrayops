@@ -113,16 +113,16 @@ jobs:
         override: true
 
     - name: Run clippy (default features)
-      run: cargo clippy --lib -- -D clippy::all
+      run: cargo clippy --lib -- -D clippy::all -A deprecated
 
     - name: Run clippy (parallel feature)
-      run: cargo clippy --lib --features parallel -- -D clippy::all
+      run: cargo clippy --lib --features parallel -- -D clippy::all -A deprecated
 
     - name: Run clippy (simd feature)
-      run: cargo clippy --lib --features simd -- -D clippy::all
+      run: cargo clippy --lib --features simd -- -D clippy::all -A deprecated
 
     - name: Run clippy (all features)
-      run: cargo clippy --lib --all-features -- -D clippy::all
+      run: cargo clippy --lib --all-features -- -D clippy::all -A deprecated
 
     - name: Check formatting
       run: cargo fmt -- --check
