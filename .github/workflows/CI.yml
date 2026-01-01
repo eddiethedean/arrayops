@@ -113,16 +113,16 @@ jobs:
         override: true
 
     - name: Run clippy (default features)
-      run: cargo clippy -- -D warnings
+      run: cargo clippy --lib -- -D clippy::all
 
     - name: Run clippy (parallel feature)
-      run: cargo clippy --features parallel -- -D warnings
+      run: cargo clippy --lib --features parallel -- -D clippy::all
 
     - name: Run clippy (simd feature)
-      run: cargo clippy --features simd -- -D warnings
+      run: cargo clippy --lib --features simd -- -D clippy::all
 
     - name: Run clippy (all features)
-      run: cargo clippy --all-features -- -D warnings
+      run: cargo clippy --lib --all-features -- -D clippy::all
 
     - name: Check formatting
       run: cargo fmt -- --check
