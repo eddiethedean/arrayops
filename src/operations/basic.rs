@@ -9,11 +9,10 @@ use crate::types::TypeCode;
 use crate::validation::{detect_input_type, validate_for_operation, get_typecode_unified};
 use crate::buffer::{
     get_array_len, get_itemsize, CACHE_BLOCK_SIZE,
-    PARALLEL_THRESHOLD_SUM, PARALLEL_THRESHOLD_SCALE, PARALLEL_THRESHOLD_MEAN, PARALLEL_THRESHOLD_MINMAX,
 };
 
 #[cfg(feature = "parallel")]
-use crate::buffer::{extract_buffer_to_vec, should_parallelize};
+use crate::buffer::{extract_buffer_to_vec, should_parallelize, PARALLEL_THRESHOLD_SUM, PARALLEL_THRESHOLD_SCALE, PARALLEL_THRESHOLD_MEAN, PARALLEL_THRESHOLD_MINMAX};
 
 // Generic sum implementation with cache-friendly processing
 fn sum_impl<T>(py: Python<'_>, buffer: &PyBuffer<T>, len: usize) -> PyResult<T>
